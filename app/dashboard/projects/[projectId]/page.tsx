@@ -90,7 +90,33 @@ export default function ProjectBoardPage({ params }: ProjectBoardPageProps) {
 
   const taskMutation = useMutation({
     mutationFn: updateTaskStatus,
-    onSuccess: () => {
+    onMutate: async ({ taskId, status_id }) => {
+      // Cancelar queries em andamento para não sobrescrever a atualização otimista
+      await queryClient.cancelQueries({ queryKey: ["tasks", projectId] });
+
+      // Snapshot do estado anterior para rollback se necessário
+      const previousTasks = queryClient.getQueryData<Task[]>(["tasks", projectId]);
+
+      // Atualização otimista: atualizar o cache imediatamente
+      queryClient.setQueryData<Task[]>(["tasks", projectId], (old) => {
+        if (!old) return [];
+        return old.map((task) =>
+          task.id === taskId ? { ...task, status_id } : task
+        );
+      });
+
+      // Retornar contexto com dados anteriores para rollback
+      return { previousTasks };
+    },
+    onError: (err, variables, context) => {
+      // Rollback: restaurar estado anterior se der erro
+      if (context?.previousTasks) {
+        queryClient.setQueryData(["tasks", projectId], context.previousTasks);
+      }
+      toast.error("Erro ao mover tarefa. Tente novamente.");
+    },
+    onSettled: () => {
+      // Sempre invalidar as queries no final para garantir sincronização
       queryClient.invalidateQueries({ queryKey: ["tasks", projectId] });
     },
   });
@@ -115,10 +141,9 @@ export default function ProjectBoardPage({ params }: ProjectBoardPageProps) {
       queryClient.invalidateQueries({ queryKey: ["project", projectId] });
       queryClient.invalidateQueries({ queryKey: ["projects"] });
     },
-    onError: (error: any) => {
-      toast.error(
-        error.response?.data?.message || "Não foi possível finalizar o projeto."
-      );
+    onError: (error: unknown) => {
+      toast.error("Não foi possível finalizar o projeto.");
+      console.error("Erro ao finalizar projeto:", error);
     },
   });
 
