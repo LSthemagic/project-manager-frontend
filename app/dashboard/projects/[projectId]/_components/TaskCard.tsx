@@ -117,7 +117,7 @@ export function TaskCard({ task, onClick }: { task: TaskExtra; onClick: () => vo
           </div>
         </CardHeader>
         
-        <CardContent className="p-3 pt-0 space-y-3">
+        <CardContent className="p-3 pt-0 space-y-3 -mt-4">
           {/* Descrição */}
           {task.descricao && (
             <p className="text-xs text-muted-foreground line-clamp-2">
