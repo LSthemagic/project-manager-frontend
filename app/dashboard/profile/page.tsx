@@ -12,6 +12,7 @@ import { useMutation } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
+import { useState } from 'react';
 
 const profileFormSchema = z.object({
   nome: z.string().min(2, { message: 'O nome deve ter pelo menos 2 caracteres.' }),
@@ -27,7 +28,19 @@ const updateProfile = (data: z.infer<typeof profileFormSchema>) => api.put('/aut
 const changePassword = (data: z.infer<typeof passwordFormSchema>) => api.put('/auth/change-password', data);
 
 export default function ProfilePage() {
-  const { user, login } = useAuth(); // Usaremos o login para "re-autenticar" após a mudança de dados
+  const { user, refreshUser } = useAuth(); // Usaremos refreshUser após mudanças
+
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const initialProfilePicture = (user as unknown as { profile_picture?: string })?.profile_picture || null;
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(initialProfilePicture);
+
+  function isAxiosErrorWithMessage(e: unknown): e is { response: { data: { message?: string } } } {
+    if (typeof e !== 'object' || e === null) return false;
+    const r = (e as Record<string, unknown>)['response'];
+    if (typeof r !== 'object' || r === null) return false;
+    const d = (r as Record<string, unknown>)['data'];
+    return typeof d === 'object' && d !== null;
+  }
 
   const profileForm = useForm<z.infer<typeof profileFormSchema>>({
     resolver: zodResolver(profileFormSchema),
@@ -44,11 +57,11 @@ export default function ProfilePage() {
 
   const profileMutation = useMutation({
     mutationFn: updateProfile,
-    onSuccess: async (response) => {
-        toast.success('Perfil atualizado com sucesso!');
-        // Atualiza os dados do usuário no contexto
-        await login(response.data.user.email, profileForm.getValues().senhaAtual);
-    },
+  onSuccess: async () => {
+    toast.success('Perfil atualizado com sucesso!');
+    // Atualiza os dados do usuário no contexto
+    await refreshUser();
+  },
     onError: () => {
         toast.error('Ocorreu um erro ao atualizar o perfil.');
     }
@@ -60,9 +73,10 @@ export default function ProfilePage() {
           toast.success('Senha alterada com sucesso! Você será desconectado.');
           // A API já destrói a sessão, o frontend irá redirecionar automaticamente.
       },
-      onError: (error: any) => {
-          toast.error(error.response?.data?.message || 'Ocorreu um erro ao alterar a senha.');
-      }
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : 'Ocorreu um erro ao alterar a senha.';
+      toast.error(message);
+    }
   });
 
   const onProfileSubmit = (values: z.infer<typeof profileFormSchema>) => {
@@ -73,84 +87,182 @@ export default function ProfilePage() {
       passwordMutation.mutate(values);
   };
 
-  return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Meu Perfil</h1>
-      <Card>
-        <CardHeader>
-          <CardTitle>Informações Pessoais</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Form {...profileForm}>
-            <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-4">
-              <FormField
-                control={profileForm.control}
-                name="nome"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nome</FormLabel>
-                    <FormControl><Input {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={profileForm.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl><Input type="email" {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <Button type="submit" disabled={profileMutation.isPending}>
-                {profileMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Salvar Alterações
-              </Button>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+  const handleAvatarChange = (file?: File) => {
+    if (!file) return setAvatarFile(null);
+    setAvatarFile(file);
+    const url = URL.createObjectURL(file);
+    setAvatarPreview(url);
+  };
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Alterar Senha</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Form {...passwordForm}>
-            <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
-              <FormField
-                control={passwordForm.control}
-                name="senhaAtual"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Senha Atual</FormLabel>
-                    <FormControl><Input type="password" {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={passwordForm.control}
-                name="novaSenha"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nova Senha</FormLabel>
-                    <FormControl><Input type="password" {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <Button type="submit" variant="destructive" disabled={passwordMutation.isPending}>
-                 {passwordMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Alterar Senha
-              </Button>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+  const uploadAvatar = async () => {
+    if (!avatarFile) return toast.error('Selecione uma imagem primeiro.');
+    const formData = new FormData();
+    formData.append('file', avatarFile, avatarFile.name);
+
+    try {
+      await api.put('/auth/me/avatar', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      toast.success('Avatar enviado com sucesso!');
+      await refreshUser();
+      // revoke preview object URL
+      if (avatarPreview && avatarPreview.startsWith('blob:')) URL.revokeObjectURL(avatarPreview);
+    } catch (err: unknown) {
+      let message = 'Erro ao enviar avatar.';
+      if (isAxiosErrorWithMessage(err) && err.response?.data?.message) {
+        message = err.response.data.message;
+      } else if (err instanceof Error) {
+        message = err.message;
+      }
+      toast.error(message);
+    }
+  };
+
+  return (
+    <div className="max-w-5xl mx-auto px-4 py-8">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-3xl font-semibold leading-tight">Meu Perfil</h1>
+          <p className="text-sm text-muted-foreground mt-1">Gerencie suas informações pessoais e configurações de segurança.</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <aside className="lg:col-span-1">
+          <Card className="bg-white/80 border hover:shadow-lg transition-shadow duration-150">
+            <CardContent>
+              <div className="flex flex-col items-center text-center space-y-4 py-6">
+                <div className="h-28 w-28 rounded-full bg-gradient-to-br from-gray-100 to-gray-50 shadow-inner flex items-center justify-center overflow-hidden border border-gray-100">
+                  {avatarPreview ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={avatarPreview} alt={user?.nome} className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="text-2xl font-semibold text-gray-700">{user?.nome ? user.nome.charAt(0).toUpperCase() : 'U'}</span>
+                  )}
+                </div>
+
+                <div>
+                  <p className="font-medium text-lg">{user?.nome || 'Usuário'}</p>
+                  <p className="text-sm text-muted-foreground truncate">{user?.email}</p>
+                </div>
+
+                <p className="text-xs text-center text-muted-foreground max-w-[200px]">Perfil público mínimo — mantenha suas informações atualizadas.</p>
+
+                <div className="w-full mt-3">
+                  <label className="relative flex items-center justify-center h-10 rounded-md bg-muted/60 hover:bg-muted/80 border border-dashed border-gray-200 cursor-pointer text-sm text-muted-foreground">
+                    <input
+                      id="avatar"
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleAvatarChange(e.target.files ? e.target.files[0] : undefined)}
+                      className="absolute inset-0 opacity-0 cursor-pointer"
+                    />
+                    <span className="pointer-events-none">Escolher arquivo</span>
+                  </label>
+
+                  <div className="flex gap-2 mt-3 justify-center sm:justify-end">
+                    <Button size="sm" variant="outline" onClick={() => { setAvatarFile(null); setAvatarPreview(initialProfilePicture || null); }}>
+                      Reset
+                    </Button>
+                    <Button size="sm" onClick={uploadAvatar} disabled={!avatarFile}>
+                      {avatarFile ? 'Upload' : 'Upload'}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </aside>
+
+        <main className="lg:col-span-2 space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Informações Pessoais</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Form {...profileForm}>
+                <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="grid grid-cols-1 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FormField
+                      control={profileForm.control}
+                      name="nome"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Nome</FormLabel>
+                          <FormControl><Input {...field} placeholder="Seu nome" /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={profileForm.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email</FormLabel>
+                          <FormControl><Input type="email" {...field} placeholder="seu@exemplo.com" /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="flex justify-end">
+                    <Button type="submit" disabled={profileMutation.isPending} className="flex items-center">
+                      {profileMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Salvar
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Segurança</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground mb-4">Altere sua senha regularmente para manter sua conta segura.</p>
+              <Form {...passwordForm}>
+                <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="grid grid-cols-1 gap-4">
+                  <FormField
+                    control={passwordForm.control}
+                    name="senhaAtual"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Senha Atual</FormLabel>
+                        <FormControl><Input type="password" {...field} placeholder="Senha atual" /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={passwordForm.control}
+                    name="novaSenha"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nova Senha</FormLabel>
+                        <FormControl><Input type="password" {...field} placeholder="Nova senha (mín. 6 caracteres)" /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="flex justify-end">
+                    <Button type="submit" variant="destructive" disabled={passwordMutation.isPending} className="flex items-center">
+                      {passwordMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Alterar Senha
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+        </main>
+      </div>
     </div>
   );
 }
