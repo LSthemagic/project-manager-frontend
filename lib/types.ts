@@ -113,13 +113,19 @@ export type DashboardStats = {
 };
 
 export type ProductivityReport = {
-    usuario_id: number;
-    usuario_nome: string;
-    total_tarefas: number;
-    tarefas_concluidas: number;
-    total_horas_registradas: string;
-    taxa_conclusao_percent: string;
-    projetos_envolvidos: number;
+  usuario_id: number;
+  usuario_nome: string;
+  usuario_email?: string;
+  tipo_usuario?: 'admin' | 'gerente' | 'comum' | string;
+  projetos_envolvidos: number | string;
+  total_tarefas: number | string;
+  tarefas_concluidas: number | string;
+  tarefas_em_progresso?: number | string;
+  tarefas_pendentes?: number | string;
+  taxa_conclusao_percent: number | string;
+  media_horas_por_registro?: number | string;
+  total_horas_registradas: number | string;
+  ultima_atividade?: string | null;
 };
 
 export type AuditLog = {
@@ -127,8 +133,8 @@ export type AuditLog = {
     tabela: string;
     operacao: string;
     registro_id: number;
-    dados_antigos: any;
-    dados_novos: any;
+  dados_antigos: Record<string, unknown> | null;
+  dados_novos: Record<string, unknown> | null;
     usuario_id: number;
     usuario_nome: string;
     data_operacao: string;
