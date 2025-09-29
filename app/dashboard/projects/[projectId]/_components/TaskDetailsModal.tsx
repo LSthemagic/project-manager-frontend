@@ -37,40 +37,40 @@ export function TaskDetailsModal({ taskId, onOpenChange }: TaskDetailsModalProps
 
   return (
     <Dialog open={!!taskId} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[625px]">
+      <DialogContent className="sm:max-w-[625px] w-full max-w-[98vw] p-2 sm:p-8">
         <DialogHeader>
-          <DialogTitle>{task?.titulo || 'Carregando tarefa...'}</DialogTitle>
+          <DialogTitle className="truncate">{task?.titulo || 'Carregando tarefa...'}</DialogTitle>
         </DialogHeader>
         {isLoading ? (
-          <div>Carregando...</div>
+          <div className="py-8 text-center">Carregando...</div>
         ) : task && (
-          <Tabs defaultValue="details">
-            <TabsList className="grid w-full grid-cols-6">
-              <TabsTrigger value="details">Detalhes</TabsTrigger>
-              <TabsTrigger value="tags">Etiquetas</TabsTrigger>
-              <TabsTrigger value="comments">Comentários</TabsTrigger>
-              <TabsTrigger value="subtasks">Sub-tarefas</TabsTrigger>
-              <TabsTrigger value="attachments">Anexos</TabsTrigger>
-              <TabsTrigger value="timelogs">Horas</TabsTrigger>
-            </TabsList>
-            <TabsContent value="details">
-              <TaskDetailsForm task={task} />
-            </TabsContent>
-            <TabsContent value="tags">
-                <TagsTab taskId={task.id} />
-            </TabsContent>
-            <TabsContent value="comments">
-              <CommentsTab taskId={task.id} />
-            </TabsContent>
-            <TabsContent value="subtasks">
-              <SubtasksTab taskId={task.id} />
-            </TabsContent>
-            <TabsContent value="attachments">
-              <AttachmentsTab taskId={task.id} />
-            </TabsContent>
-            <TabsContent value="timelogs">
-                <TimeLogTab taskId={task.id} />
-            </TabsContent>
+          <Tabs defaultValue="details" className="mt-4">
+        <TabsList className="grid w-full h-full grid-cols-2 sm:grid-cols-6 gap-2">
+          <TabsTrigger value="details" className="truncate">Detalhes</TabsTrigger>
+          <TabsTrigger value="tags" className="truncate">Etiquetas</TabsTrigger>
+          <TabsTrigger value="comments" className="truncate">Comentários</TabsTrigger>
+          <TabsTrigger value="subtasks" className="truncate">Sub-tarefas</TabsTrigger>
+          <TabsTrigger value="attachments" className="truncate">Anexos</TabsTrigger>
+          <TabsTrigger value="timelogs" className="truncate">Horas</TabsTrigger>
+        </TabsList>
+        <TabsContent value="details" className="pt-2">
+          <TaskDetailsForm task={task} />
+        </TabsContent>
+        <TabsContent value="tags" className="pt-2">
+          <TagsTab taskId={task.id} />
+        </TabsContent>
+        <TabsContent value="comments" className="pt-2">
+          <CommentsTab taskId={task.id} />
+        </TabsContent>
+        <TabsContent value="subtasks" className="pt-2">
+          <SubtasksTab taskId={task.id} />
+        </TabsContent>
+        <TabsContent value="attachments" className="pt-2">
+          <AttachmentsTab taskId={task.id} />
+        </TabsContent>
+        <TabsContent value="timelogs" className="pt-2">
+          <TimeLogTab taskId={task.id} />
+        </TabsContent>
           </Tabs>
         )}
       </DialogContent>
