@@ -3,7 +3,6 @@
 import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
 import api from '../lib/api';
 import { User } from '../lib/types';
-import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
   user: User | null;
@@ -11,6 +10,7 @@ interface AuthContextType {
   login: (email: string, senha: string) => Promise<void>;
   register: (nome: string, email: string, senha: string) => Promise<void>;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -18,16 +18,16 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
+  // router not currently used here
 
   useEffect(() => {
     const checkUserStatus = async () => {
       try {
         const { data } = await api.get('/auth/me');
         setUser(data.user);
-      } catch (error) {
-        setUser(null);
-      } finally {
+      } catch {
+          setUser(null);
+        } finally {
         setLoading(false);
       }
     };
@@ -49,7 +49,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     window.location.href = '/';
   };
 
-  const value = { user, loading, login, register, logout };
+  const refreshUser = async () => {
+    try {
+      const { data } = await api.get('/auth/me');
+      setUser(data.user);
+    } catch {
+      // ignore
+    };
+  };
+
+  const value = { user, loading, login, register, logout, refreshUser };
 
   return (
     <AuthContext.Provider value={value}>

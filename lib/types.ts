@@ -2,6 +2,7 @@ export type User = {
   id: number;
   nome: string;
   email: string;
+  profile_picture?: string | null;
   tipo_usuario: 'admin' | 'gerente' | 'comum';
 };
 
