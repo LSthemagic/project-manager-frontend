@@ -29,7 +29,9 @@ export function Header() {
           Contato
         </Link>
         <Button asChild>
-          <Link href="/auth/login">Acessar Plataforma</Link>
+          <Link href="/dashboard">
+            Acessar Plataforma
+          </Link>
         </Button>
       </nav>
 

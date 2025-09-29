@@ -46,7 +46,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = async () => {
     await api.post('/auth/logout');
     setUser(null);
-    router.push('/auth/login');
+    window.location.href = '/';
   };
 
   const value = { user, loading, login, register, logout };
