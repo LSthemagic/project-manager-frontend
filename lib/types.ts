@@ -93,15 +93,6 @@ export type TeamMember = {
     papel: string;
 }
 
-export type Milestone = {
-    id: number;
-    nome: string;
-    descricao: string | null;
-    data_meta: string;
-    concluido: boolean;
-    projeto_id: number;
-}
-
 export type DashboardStats = {
     total_usuarios_ativos: { value: number; change: number };
     projetos_ativos: { value: number; change: number };

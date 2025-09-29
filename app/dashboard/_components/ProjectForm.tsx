@@ -289,26 +289,26 @@ export function ProjectForm({
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
-              control={form.control}
-              name="prioridade"
-              render={({ field }) => (
-                <FormItem>
-                <FormLabel>Prioridade</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione..." />
-                  </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                  <SelectItem value="baixa">Baixa</SelectItem>
-                  <SelectItem value="media">Média</SelectItem>
-                  <SelectItem value="alta">Alta</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-                </FormItem>
-              )}
+                control={form.control}
+                name="prioridade"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Prioridade</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione..." />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="baixa">Baixa</SelectItem>
+                        <SelectItem value="media">Média</SelectItem>
+                        <SelectItem value="alta">Alta</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
               <FormField
               control={form.control}

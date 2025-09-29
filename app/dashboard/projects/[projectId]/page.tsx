@@ -18,7 +18,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { TaskForm } from './_components/TaskForm';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TeamManagementModal } from './_components/TeamManagementModal';
-import { MilestonesModal } from './_components/MilestonesModal';
 import { toast } from 'sonner';
 
 const fetchProjectDetails = async (projectId: string): Promise<Project> => {
@@ -212,11 +211,7 @@ export default function ProjectBoardPage({ params }: ProjectBoardPageProps) {
         taskId={selectedTaskId}
         onOpenChange={() => setSelectedTaskId(null)}
       />
-      <MilestonesModal
-        isOpen={isMilestonesModalOpen}
-        onOpenChange={setIsMilestonesModalOpen}
-        projectId={project.id}
-      />
+
       {selectedStatusId && (
         <TaskForm
           isOpen={isTaskFormOpen}
@@ -248,13 +243,6 @@ export default function ProjectBoardPage({ params }: ProjectBoardPageProps) {
                 Gerenciar Equipe
               </Button>
             )}
-            {/* <Button
-              variant="outline"
-              onClick={() => setIsMilestonesModalOpen(true)}
-            >
-              <Award className="mr-2 h-4 w-4" />
-              Marcos
-            </Button> */}
             {canManageProject && (
               <AlertDialog>
                 <DropdownMenu>
