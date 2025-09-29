@@ -18,6 +18,7 @@ import { CalendarIcon, Loader2 } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
 
 const formSchema = z.object({
   nome: z.string().min(3, { message: 'O nome deve ter pelo menos 3 caracteres.' }),
@@ -50,7 +51,7 @@ const updateProject = (data: any) => api.put(`/projects/${data.id}`, data);
 
 export function ProjectForm({ isOpen, onOpenChange, project }: ProjectFormProps) {
   const queryClient = useQueryClient();
-  const isEditing = !!(project && project.id > 0);
+  const isEditing = !!project;
 
   const { data: categories, isLoading: isLoadingCategories } = useQuery<Category[]>({
     queryKey: ['categories'],
@@ -104,11 +105,13 @@ export function ProjectForm({ isOpen, onOpenChange, project }: ProjectFormProps)
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       if(isEditing) {
-        queryClient.invalidateQueries({ queryKey: ['project', project?.id] });
+        queryClient.invalidateQueries({ queryKey: ['project', String(project?.id)] });
       }
+      toast.success(`Projeto ${isEditing ? 'atualizado' : 'criado'} com sucesso!`);
       onOpenChange(false);
     },
     onError: (error) => {
+      toast.error("Erro ao salvar projeto.");
       console.error("Erro ao salvar projeto:", error);
     },
   });
@@ -141,7 +144,7 @@ export function ProjectForm({ isOpen, onOpenChange, project }: ProjectFormProps)
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Nome do Projeto</FormLabel>
-                  <FormControl><Input placeholder="Ex: Lançamento do App" {...field} /></FormControl>
+                  <FormControl><Input placeholder="Ex: Lançamento do App" {...field} value={field.value ?? ''} /></FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -152,7 +155,7 @@ export function ProjectForm({ isOpen, onOpenChange, project }: ProjectFormProps)
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Descrição</FormLabel>
-                  <FormControl><Textarea placeholder="Descreva o objetivo principal do projeto" {...field} /></FormControl>
+                  <FormControl><Textarea placeholder="Descreva o objetivo principal do projeto" {...field} value={field.value ?? ''} /></FormControl>
                   <FormMessage />
                 </FormItem>
               )}

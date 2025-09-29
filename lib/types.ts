@@ -16,9 +16,10 @@ export type Project = {
   orcamento: number | null;
   progresso?: number;
   categoria_id: number;
-  team_id?: number; // Adicionado para referência
-  lider_id?: number; // Adicionado para referência
+  team_id?: number;
+  lider_id?: number;
 };
+
 
 export type TaskStatus = {
   id: number;
