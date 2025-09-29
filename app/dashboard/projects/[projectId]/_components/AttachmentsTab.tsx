@@ -46,6 +46,8 @@ type AttachmentsTabProps = {
   taskId: number;
 };
 
+// /api/tasks/attachments/3/resize?
+
 export function AttachmentsTab({ taskId }: AttachmentsTabProps) {
   const queryClient = useQueryClient();
   const [width, setWidth] = useState(200);
