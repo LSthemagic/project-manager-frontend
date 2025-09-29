@@ -13,12 +13,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { useEffect } from 'react';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2 } from 'lucide-react'; // Importar o ícone
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { CalendarIcon, Loader2 } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
 
 const formSchema = z.object({
   nome: z.string().min(3, { message: 'O nome deve ter pelo menos 3 caracteres.' }),
   descricao: z.string().optional(),
   categoria_id: z.string().min(1, { message: 'Selecione uma categoria.' }),
+  status: z.enum(['planejamento', 'em_andamento', 'concluido', 'cancelado']),
+  prioridade: z.enum(['baixa', 'media', 'alta']),
+  data_inicio: z.date().optional().nullable(),
+  data_fim: z.date().optional().nullable(),
+  orcamento: z.coerce.number().optional().nullable(),
 });
 
 type ProjectFormProps = {
@@ -32,8 +41,8 @@ const fetchCategories = async (): Promise<Category[]> => {
   return data;
 };
 
-const createProject = (data: Omit<z.infer<typeof formSchema>, 'categoria_id'> & { categoria_id: number }) => api.post('/projects', data);
-const updateProject = ({ id, ...data }: { id: number } & Omit<z.infer<typeof formSchema>, 'categoria_id'> & { categoria_id: number }) => api.put(`/projects/${id}`, data);
+const createProject = (data: any) => api.post('/projects', data);
+const updateProject = ({ id, ...data }: any) => api.put(`/projects/${id}`, data);
 
 export function ProjectForm({ isOpen, onOpenChange, project }: ProjectFormProps) {
   const queryClient = useQueryClient();
@@ -46,18 +55,43 @@ export function ProjectForm({ isOpen, onOpenChange, project }: ProjectFormProps)
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: { nome: '', descricao: '', categoria_id: '' },
+    defaultValues: {
+      nome: '',
+      descricao: '',
+      categoria_id: '',
+      status: 'planejamento',
+      prioridade: 'media',
+      data_inicio: null,
+      data_fim: null,
+      orcamento: 0,
+    },
   });
 
   useEffect(() => {
-    if (project) {
-      form.reset({
-        nome: project.nome,
-        descricao: project.descricao || '',
-        categoria_id: String(project.categoria_id),
-      });
-    } else {
-      form.reset({ nome: '', descricao: '', categoria_id: '' });
+    if (isOpen) {
+        if (project) {
+        form.reset({
+            nome: project.nome,
+            descricao: project.descricao || '',
+            categoria_id: String(project.categoria_id),
+            status: project.status,
+            prioridade: project.prioridade,
+            data_inicio: project.data_inicio ? new Date(project.data_inicio) : null,
+            data_fim: project.data_fim ? new Date(project.data_fim) : null,
+            orcamento: project.orcamento || 0,
+        });
+        } else {
+        form.reset({
+            nome: '',
+            descricao: '',
+            categoria_id: '',
+            status: 'planejamento',
+            prioridade: 'media',
+            data_inicio: null,
+            data_fim: null,
+            orcamento: 0,
+        });
+        }
     }
   }, [project, form, isOpen]);
 
@@ -65,7 +99,9 @@ export function ProjectForm({ isOpen, onOpenChange, project }: ProjectFormProps)
     mutationFn: isEditing ? updateProject : createProject,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
-      queryClient.invalidateQueries({ queryKey: ['project', project?.id] });
+      if(isEditing) {
+        queryClient.invalidateQueries({ queryKey: ['project', project?.id] });
+      }
       onOpenChange(false);
     },
     onError: (error) => {
@@ -74,13 +110,17 @@ export function ProjectForm({ isOpen, onOpenChange, project }: ProjectFormProps)
   });
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    const projectData = { ...values, id: project?.id, categoria_id: Number(values.categoria_id) };
+    const projectData = { 
+        ...values, 
+        id: project?.id, 
+        categoria_id: Number(values.categoria_id) 
+    };
     mutation.mutate(projectData);
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>{isEditing ? 'Editar Projeto' : 'Criar Novo Projeto'}</DialogTitle>
         </DialogHeader>
@@ -108,24 +148,154 @@ export function ProjectForm({ isOpen, onOpenChange, project }: ProjectFormProps)
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="categoria_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Categoria</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value} disabled={isLoadingCategories}>
-                    <FormControl><SelectTrigger><SelectValue placeholder="Selecione a categoria..." /></SelectTrigger></FormControl>
-                    <SelectContent>
-                      {categories?.map((cat) => (
-                        <SelectItem key={cat.id} value={String(cat.id)}>{cat.nome}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                control={form.control}
+                name="categoria_id"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Categoria</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value} disabled={isLoadingCategories}>
+                        <FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl>
+                        <SelectContent>
+                        {categories?.map((cat) => (
+                            <SelectItem key={cat.id} value={String(cat.id)}>{cat.nome}</SelectItem>
+                        ))}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Status</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl>
+                        <SelectContent>
+                            <SelectItem value="planejamento">Planejamento</SelectItem>
+                            <SelectItem value="em_andamento">Em Andamento</SelectItem>
+                            <SelectItem value="concluido">Concluído</SelectItem>
+                            <SelectItem value="cancelado">Cancelado</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+            </div>
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                control={form.control}
+                name="prioridade"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Prioridade</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl>
+                        <SelectContent>
+                            <SelectItem value="baixa">Baixa</SelectItem>
+                            <SelectItem value="media">Média</SelectItem>
+                            <SelectItem value="alta">Alta</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                <FormField
+                control={form.control}
+                name="orcamento"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Orçamento (R$)</FormLabel>
+                    <FormControl><Input type="number" step="0.01" placeholder="0,00" {...field} /></FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                    control={form.control}
+                    name="data_inicio"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                        <FormLabel>Data de Início</FormLabel>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                            <FormControl>
+                                <Button
+                                variant={"outline"}
+                                className={cn(
+                                    "pl-3 text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                )}
+                                >
+                                {field.value ? (
+                                    format(field.value, "PPP")
+                                ) : (
+                                    <span>Escolha uma data</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                            </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                                mode="single"
+                                selected={field.value || undefined}
+                                onSelect={field.onChange}
+                                initialFocus
+                            />
+                            </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="data_fim"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                        <FormLabel>Data Final</FormLabel>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                            <FormControl>
+                                <Button
+                                variant={"outline"}
+                                className={cn(
+                                    "pl-3 text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                )}
+                                >
+                                {field.value ? (
+                                    format(field.value, "PPP")
+                                ) : (
+                                    <span>Escolha uma data</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                            </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                                mode="single"
+                                selected={field.value || undefined}
+                                onSelect={field.onChange}
+                                initialFocus
+                            />
+                            </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            </div>
             <DialogFooter>
               <Button type="submit" disabled={mutation.isPending}>
                 {mutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

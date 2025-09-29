@@ -9,8 +9,15 @@ export type Project = {
   id: number;
   nome: string;
   descricao: string;
-  status: string;
+  status: 'planejamento' | 'em_andamento' | 'concluido' | 'cancelado';
+  prioridade: 'baixa' | 'media' | 'alta';
+  data_inicio: string | null;
+  data_fim: string | null;
+  orcamento: number | null;
   progresso?: number;
+  categoria_id: number;
+  team_id?: number; // Adicionado para referência
+  lider_id?: number; // Adicionado para referência
 };
 
 export type TaskStatus = {
@@ -27,9 +34,11 @@ export type Task = {
   projeto_id: number;
   status_id: number;
   responsavel_id: number | null;
+  data_inicio: string | null;
+  data_fim: string | null;
+  estimativa_horas: number | null;
 };
 
-// Novos tipos
 export type Comment = {
   id: number;
   conteudo: string;
@@ -68,3 +77,59 @@ export type TimeLog = {
     usuario_nome: string;
     usuario_id: number;
 };
+
+export type Etiqueta = {
+  id: number;
+  nome: string;
+  cor: string;
+}
+
+// Novo tipo adicionado
+export type TeamMember = {
+    id: number;
+    nome: string;
+    email: string;
+    data_entrada: string;
+    papel: string;
+}
+
+export type Milestone = {
+    id: number;
+    nome: string;
+    descricao: string | null;
+    data_meta: string;
+    concluido: boolean;
+    projeto_id: number;
+}
+
+export type DashboardStats = {
+    total_usuarios_ativos: { value: number; change: number };
+    projetos_ativos: { value: number; change: number };
+    tarefas_pendentes: { value: number; change: number };
+    tarefas_concluidas: { value: number; change: number };
+    horas_mes_atual: { value: number; change: number };
+    progresso_medio_projetos: { value: number; change: number };
+    projetos_atrasados: { value: number; change: number };
+};
+
+export type ProductivityReport = {
+    usuario_id: number;
+    usuario_nome: string;
+    total_tarefas: number;
+    tarefas_concluidas: number;
+    total_horas_registradas: string;
+    taxa_conclusao_percent: string;
+    projetos_envolvidos: number;
+};
+
+export type AuditLog = {
+    id: number;
+    tabela: string;
+    operacao: string;
+    registro_id: number;
+    dados_antigos: any;
+    dados_novos: any;
+    usuario_id: number;
+    usuario_nome: string;
+    data_operacao: string;
+}

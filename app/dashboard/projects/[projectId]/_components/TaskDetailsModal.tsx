@@ -8,7 +8,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CommentsTab } from './CommentsTab';
 import { SubtasksTab } from './SubtasksTab';
 import { AttachmentsTab } from './AttachmentsTab';
-import { TimeLogTab } from './TimeLogTab'; // Importar
+import { TimeLogTab } from './TimeLogTab';
+import { TaskDetailsForm } from './TaskDetailsForm';
+import { TagsTab } from './TagsTab'; // Importar
 
 const fetchTaskDetails = async (taskId: number): Promise<Task> => {
   const { data } = await api.get(`/tasks/${taskId}`);
@@ -43,18 +45,19 @@ export function TaskDetailsModal({ taskId, onOpenChange }: TaskDetailsModalProps
           <div>Carregando...</div>
         ) : task && (
           <Tabs defaultValue="details">
-            <TabsList>
+            <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="details">Detalhes</TabsTrigger>
+              <TabsTrigger value="tags">Etiquetas</TabsTrigger>
               <TabsTrigger value="comments">Comentários</TabsTrigger>
               <TabsTrigger value="subtasks">Sub-tarefas</TabsTrigger>
               <TabsTrigger value="attachments">Anexos</TabsTrigger>
               <TabsTrigger value="timelogs">Horas</TabsTrigger>
             </TabsList>
             <TabsContent value="details">
-              <div className="space-y-4 py-4">
-                <p>{task.descricao || 'Esta tarefa não possui descrição.'}</p>
-                <div><strong>Prioridade:</strong> {task.prioridade}</div>
-              </div>
+              <TaskDetailsForm task={task} />
+            </TabsContent>
+            <TabsContent value="tags">
+                <TagsTab taskId={task.id} />
             </TabsContent>
             <TabsContent value="comments">
               <CommentsTab taskId={task.id} />

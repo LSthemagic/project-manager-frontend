@@ -5,8 +5,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { UserNav } from "../_components/UserNav";
-import { LayoutDashboard, FolderKanban, Users, Settings } from "lucide-react";
-import { Searchbar } from "./_components/Searchbar"; // Importar
+import { LayoutDashboard, FolderKanban, Users, Settings, Tags, BarChart, History } from "lucide-react"; // Importar ícones
+import { Searchbar } from "./_components/Searchbar";
 
 export default function DashboardLayout({
   children,
@@ -29,6 +29,9 @@ export default function DashboardLayout({
       </div>
     );
   }
+  
+  const canSeeAdminLinks = user.tipo_usuario === "admin";
+  const canSeeManagerLinks = user.tipo_usuario === "admin" || user.tipo_usuario === "gerente";
 
   return (
     <div className="flex h-screen">
@@ -45,28 +48,30 @@ export default function DashboardLayout({
           </div>
           <div className="flex-1">
             <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
-              <Link
-                href="/dashboard"
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-              >
-                <FolderKanban className="h-4 w-4" />
-                Projetos
+              <Link href="/dashboard" className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary">
+                <FolderKanban className="h-4 w-4" /> Projetos
               </Link>
-              {user.tipo_usuario === "admin" && (
-                <>
-                  <Link
-                    href="/dashboard/admin/users"
-                    className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-                  >
-                    <Users className="h-4 w-4" />
-                    Usuários
+
+              {canSeeManagerLinks && (
+                 <Link href="/dashboard/reports" className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary">
+                    <BarChart className="h-4 w-4" /> Relatórios
                   </Link>
-                  <Link
-                    href="/dashboard/admin/categories"
-                    className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-                  >
-                    <Settings className="h-4 w-4" />
-                    Categorias
+              )}
+              
+              {canSeeAdminLinks && (
+                <>
+                  <Link href="/dashboard/admin/users" className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary">
+                    <Users className="h-4 w-4" /> Usuários
+                  </Link>
+                  <Link href="/dashboard/admin/categories" className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary">
+                    <Settings className="h-4 w-4" /> Categorias
+                  </Link>
+                  <Link href="/dashboard/admin/tags" className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary">
+                    <Tags className="h-4 w-4" /> Etiquetas
+                  </Link>
+                  {/* NOVO LINK ADICIONADO AQUI */}
+                   <Link href="/dashboard/admin/audit" className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary">
+                    <History className="h-4 w-4" /> Auditoria
                   </Link>
                 </>
               )}

@@ -12,10 +12,13 @@ import { ProjectForm } from '../../_components/ProjectForm';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Loader2, MoreHorizontal } from 'lucide-react';
+import { Award, Check, Loader2, MoreHorizontal, Users } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { TaskForm } from './_components/TaskForm';
 import { Skeleton } from '@/components/ui/skeleton';
+import { TeamManagementModal } from './_components/TeamManagementModal';
+import { MilestonesModal } from './_components/MilestonesModal';
+import { toast } from 'sonner';
 
 const fetchProjectDetails = async (projectId: string): Promise<Project> => {
   const { data } = await api.get(`/projects/${projectId}`);
@@ -32,7 +35,11 @@ const fetchTasksForProject = async (projectId: string): Promise<Task[]> => {
   return data;
 };
 
-const updateTaskStatus = async ({ taskId, status_id }: { taskId: number, status_id: number }) => {
+const finishProject = (projectId: string) => {
+  return api.post(`/projects/${projectId}/finish`);
+};
+
+const updateTaskStatus = async ({ taskId, status_id }: { taskId: number; status_id: number; }) => {
   const { data } = await api.put(`/tasks/${taskId}`, { status_id });
   return data;
 };
@@ -52,14 +59,19 @@ export default function ProjectBoardPage({ params }: ProjectBoardPageProps) {
   const { user } = useAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
-  
+
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
   const [selectedStatusId, setSelectedStatusId] = useState<number | null>(null);
+  const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
+  const [isMilestonesModalOpen, setIsMilestonesModalOpen] = useState(false);
 
-  const { data: project, isLoading: isLoadingProject } = useQuery<Project>({
+  const {
+    data: project,
+    isLoading: isLoadingProject,
+    isError: isErrorProject,
+  } = useQuery<Project>({
     queryKey: ['project', projectId],
     queryFn: () => fetchProjectDetails(projectId),
   });
@@ -89,7 +101,21 @@ export default function ProjectBoardPage({ params }: ProjectBoardPageProps) {
     },
     onError: (error) => {
       console.error("Erro ao deletar projeto:", error);
-    }
+    },
+  });
+
+  const finishProjectMutation = useMutation({
+    mutationFn: finishProject,
+    onSuccess: () => {
+      toast.success("Projeto finalizado com sucesso!");
+      queryClient.invalidateQueries({ queryKey: ['project', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+    },
+    onError: (error: any) => {
+      toast.error(
+        error.response?.data?.message || "Não foi possível finalizar o projeto."
+      );
+    },
   });
 
   const sensors = useSensors(
@@ -105,20 +131,19 @@ export default function ProjectBoardPage({ params }: ProjectBoardPageProps) {
     if (over && active.id !== over.id) {
       const taskId = Number(active.id);
       const newStatusId = Number(over.id);
-      const task = tasks?.find(t => t.id === taskId);
+      const task = tasks?.find((t) => t.id === taskId);
       if (task && task.status_id !== newStatusId) {
         taskMutation.mutate({ taskId: taskId, status_id: newStatusId });
       }
     }
   };
-  
+
   const handleAddTask = (statusId: number) => {
     setSelectedStatusId(statusId);
     setIsTaskFormOpen(true);
   };
-  
-  const isLoading = isLoadingProject || isLoadingStatuses || isLoadingTasks;
 
+  const isLoading = isLoadingProject || isLoadingStatuses || isLoadingTasks;
   const canManageProject = user?.tipo_usuario === 'admin' || user?.tipo_usuario === 'gerente';
 
   if (isLoading) {
@@ -145,7 +170,8 @@ export default function ProjectBoardPage({ params }: ProjectBoardPageProps) {
     );
   }
 
-  if (!project || !statuses || !tasks) return <div>Não foi possível carregar os dados.</div>;
+  if (isErrorProject || !project || !statuses || !tasks)
+    return <div>Não foi possível carregar os dados do projeto.</div>;
 
   return (
     <>
@@ -158,22 +184,53 @@ export default function ProjectBoardPage({ params }: ProjectBoardPageProps) {
         taskId={selectedTaskId}
         onOpenChange={() => setSelectedTaskId(null)}
       />
+      {/* CORREÇÃO: Renderize os modais mesmo que o `project` ainda não tenha `team_id`, */}
+      {/* mas passe o `project` para eles. O modal em si lidará com a ausência de dados. */}
+      <MilestonesModal
+        isOpen={isMilestonesModalOpen}
+        onOpenChange={setIsMilestonesModalOpen}
+        projectId={project.id}
+      />
+      <TeamManagementModal
+          isOpen={isTeamModalOpen}
+          onOpenChange={setIsTeamModalOpen}
+          project={project}
+      />
+
       {selectedStatusId && (
         <TaskForm
-            isOpen={isTaskFormOpen}
-            onOpenChange={setIsTaskFormOpen}
-            projectId={projectId}
-            statusId={selectedStatusId}
+          isOpen={isTaskFormOpen}
+          onOpenChange={setIsTaskFormOpen}
+          projectId={projectId}
+          statusId={selectedStatusId}
         />
       )}
+     
       <div className="flex flex-col h-full">
         <div className="mb-4 flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold">{project.nome}</h1>
             <p className="text-muted-foreground">{project.descricao}</p>
           </div>
-          {canManageProject && (
-            <AlertDialog>
+          <div className="flex items-center gap-2">
+            {canManageProject && (
+              <Button
+                variant="outline"
+                onClick={() => setIsTeamModalOpen(true)}
+              >
+                <Users className="mr-2 h-4 w-4" />
+                Gerenciar Equipe
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              onClick={() => setIsMilestonesModalOpen(true)}
+            >
+              <Award className="mr-2 h-4 w-4" />
+              Marcos
+            </Button>
+            {canManageProject && (
+              <AlertDialog>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon">
@@ -184,6 +241,12 @@ export default function ProjectBoardPage({ params }: ProjectBoardPageProps) {
                     <DropdownMenuItem onClick={() => setIsEditModalOpen(true)}>
                       Editar Projeto
                     </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => finishProjectMutation.mutate(projectId)}
+                    >
+                      <Check className="mr-2 h-4 w-4" />
+                      Finalizar Projeto
+                    </DropdownMenuItem>
                     <AlertDialogTrigger asChild>
                       <DropdownMenuItem className="text-red-600">
                         Excluir Projeto
@@ -192,25 +255,31 @@ export default function ProjectBoardPage({ params }: ProjectBoardPageProps) {
                   </DropdownMenuContent>
                 </DropdownMenu>
                 <AlertDialogContent>
-                    <AlertDialogHeader>
-                    <AlertDialogTitle>Você tem certeza absoluta?</AlertDialogTitle>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      Você tem certeza absoluta?
+                    </AlertDialogTitle>
                     <AlertDialogDescription>
-                        Essa ação não pode ser desfeita. Isso irá deletar permanentemente o projeto e todas as suas tarefas.
+                      Essa ação não pode ser desfeita. Isso irá deletar
+                      permanentemente o projeto e todas as suas tarefas.
                     </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
                     <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction 
+                    <AlertDialogAction
                       disabled={deleteProjectMutation.isPending}
                       onClick={() => deleteProjectMutation.mutate(projectId)}
                     >
-                      {deleteProjectMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      {deleteProjectMutation.isPending && (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      )}
                       Sim, excluir projeto
                     </AlertDialogAction>
-                    </AlertDialogFooter>
+                  </AlertDialogFooter>
                 </AlertDialogContent>
-            </AlertDialog>
-          )}
+              </AlertDialog>
+            )}
+          </div>
         </div>
         <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
           <div className="flex-1 overflow-x-auto pb-4">
