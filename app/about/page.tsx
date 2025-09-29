@@ -132,7 +132,7 @@ export default function AboutPage() {
                     <span className="text-2xl font-bold text-white">RS</span>
                   </div>
                   <CardTitle className="text-xl">Railan Santana</CardTitle>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">CTO & Co-Fundador</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">CEO & Co-Fundador</p>
                 </CardHeader>
                 <CardContent>
                   <p className="text-gray-600 dark:text-gray-300 text-sm">
@@ -148,7 +148,7 @@ export default function AboutPage() {
                     <span className="text-2xl font-bold text-white">NP</span>
                   </div>
                   <CardTitle className="text-xl">Nadson Pereira</CardTitle>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">CPO & Co-Fundador</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">CEO & Co-Fundador</p>
                 </CardHeader>
                 <CardContent>
                   <p className="text-gray-600 dark:text-gray-300 text-sm">

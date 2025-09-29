@@ -28,11 +28,11 @@ export function Header() {
         <Link className="text-sm font-medium hover:underline underline-offset-4 transition-colors" href="/about">
           Sobre
         </Link>
-        <Link className="text-sm font-medium hover:underline underline-offset-4" href="/contact">
+        <Link className="text-sm font-medium hover:underline underline-offset-4 transition-colors" href="/contact">
           Contato
         </Link>
         <Button asChild>
-          <Link href="/dashboard">
+          <Link href="/auth/login">
             Acessar Plataforma
           </Link>
         </Button>
@@ -76,7 +76,7 @@ export function Header() {
               Sobre
             </Link>
             <Link 
-              className="text-sm font-medium hover:underline underline-offset-4 py-2" 
+              className="text-sm font-medium hover:underline underline-offset-4 py-2 transition-colors" 
               href="/contact"
               onClick={() => setIsMenuOpen(false)}
             >

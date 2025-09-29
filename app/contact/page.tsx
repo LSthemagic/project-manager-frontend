@@ -10,8 +10,10 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Header } from '../_components/Header';
 import { Footer } from '../_components/Footer';
+import { Mail, Phone, MapPin, Clock, Send, CheckCircle } from 'lucide-react';
 
 const contactFormSchema = z.object({
   nome: z.string().min(2, { message: 'O nome é obrigatório.' }),
@@ -39,7 +41,7 @@ export default function ContactPage() {
       await api.post('/contact', values);
       setSuccess('Sua mensagem foi enviada com sucesso! Entraremos em contato em breve.');
       form.reset();
-    } catch (err) {
+    } catch {
       setError('Ocorreu um erro ao enviar a mensagem. Tente novamente mais tarde.');
     }
   }
