@@ -79,7 +79,7 @@ export function TaskDetailsForm({ task }: TaskDetailsFormProps) {
     mutationFn: updateTask,
     onSuccess: () => {
       toast.success('Tarefa atualizada com sucesso!');
-      queryClient.invalidateQueries({ queryKey: ['tasks', task.projeto_id] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', String(task.projeto_id)] });
       queryClient.invalidateQueries({ queryKey: ['task', task.id] });
     },
     onError: (error) => {
@@ -101,7 +101,6 @@ export function TaskDetailsForm({ task }: TaskDetailsFormProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Título</FormLabel>
-              {/* CORREÇÃO APLICADA AQUI */}
               <FormControl><Input {...field} value={field.value ?? ''} /></FormControl>
               <FormMessage />
             </FormItem>
@@ -113,7 +112,6 @@ export function TaskDetailsForm({ task }: TaskDetailsFormProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Descrição</FormLabel>
-              {/* CORREÇÃO APLICADA AQUI */}
               <FormControl><Textarea {...field} value={field.value ?? ''} /></FormControl>
               <FormMessage />
             </FormItem>
@@ -212,7 +210,6 @@ export function TaskDetailsForm({ task }: TaskDetailsFormProps) {
             render={({ field }) => (
                 <FormItem>
                 <FormLabel>Estimativa de Horas</FormLabel>
-                {/* CORREÇÃO APLICADA AQUI */}
                 <FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl>
                 <FormMessage />
                 </FormItem>

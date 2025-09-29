@@ -6,10 +6,10 @@ import { Etiqueta } from '@/lib/types';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useState } from 'react';
 import { X } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 
 const fetchAllTags = async (): Promise<Etiqueta[]> => {
     const { data } = await api.get('/admin/tags');
@@ -36,6 +36,7 @@ type TagsTabProps = {
 export function TagsTab({ taskId }: TagsTabProps) {
     const queryClient = useQueryClient();
     const [open, setOpen] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
 
     const { data: allTags = [] } = useQuery<Etiqueta[]>({
         queryKey: ['tags'],
@@ -60,7 +61,10 @@ export function TagsTab({ taskId }: TagsTabProps) {
     const removeMutation = useMutation({ ...mutationOptions, mutationFn: removeTagFromTask });
 
     const taskTagIds = new Set(taskTags.map(t => t.id));
-    const availableTags = allTags.filter(t => !taskTagIds.has(t.id));
+    
+    const availableTags = allTags
+        .filter(t => !taskTagIds.has(t.id))
+        .filter(t => t.nome.toLowerCase().includes(searchTerm.toLowerCase()));
 
     if (isLoading) return <p>Carregando etiquetas...</p>;
 
@@ -68,7 +72,7 @@ export function TagsTab({ taskId }: TagsTabProps) {
         <div className="space-y-4 py-4">
             <div className="flex flex-wrap gap-2">
                 {taskTags.map(tag => (
-                    <Badge key={tag.id} style={{ backgroundColor: tag.cor }} className="text-white">
+                    <Badge key={tag.id} style={{ backgroundColor: tag.cor, color: 'white' }} className="cursor-pointer">
                         {tag.nome}
                         <button onClick={() => removeMutation.mutate({ taskId, tagId: tag.id })} className="ml-2 rounded-full hover:bg-black/20 p-0.5">
                             <X size={12} />
@@ -84,28 +88,32 @@ export function TagsTab({ taskId }: TagsTabProps) {
                         Adicionar etiqueta...
                     </Button>
                 </PopoverTrigger>
-                <PopoverContent className="p-0" side="bottom" align="start">
-                    <Command>
-                        <CommandInput placeholder="Buscar etiquetas..." />
-                        <CommandList>
-                            <CommandEmpty>Nenhuma etiqueta encontrada.</CommandEmpty>
-                            <CommandGroup>
-                                {availableTags.map(tag => (
-                                    <CommandItem
-                                        key={tag.id}
-                                        value={tag.nome}
-                                        onSelect={() => {
-                                            addMutation.mutate({ taskId, tagId: tag.id });
-                                            setOpen(false);
-                                        }}
-                                    >
-                                       <div className="w-4 h-4 rounded-full mr-2" style={{ backgroundColor: tag.cor }} />
-                                       {tag.nome}
-                                    </CommandItem>
-                                ))}
-                            </CommandGroup>
-                        </CommandList>
-                    </Command>
+                <PopoverContent className="p-1 w-[--radix-popover-trigger-width]" side="bottom" align="start">
+                    <div className="flex flex-col space-y-1">
+                        <Input
+                            placeholder="Buscar etiquetas..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="mb-1"
+                        />
+                        <div className="max-h-48 overflow-y-auto">
+                            {availableTags.length > 0 ? availableTags.map(tag => (
+                                <Button
+                                    key={tag.id}
+                                    variant="ghost"
+                                    className="w-full justify-start font-normal h-8 px-2"
+                                    onClick={() => {
+                                        addMutation.mutate({ taskId, tagId: tag.id });
+                                        setOpen(false);
+                                        setSearchTerm('');
+                                    }}
+                                >
+                                   <div className="w-4 h-4 rounded-full mr-2" style={{ backgroundColor: tag.cor }} />
+                                   {tag.nome}
+                                </Button>
+                            )) : <p className="p-2 text-center text-sm text-muted-foreground">Nenhuma etiqueta encontrada.</p>}
+                        </div>
+                    </div>
                 </PopoverContent>
             </Popover>
         </div>
