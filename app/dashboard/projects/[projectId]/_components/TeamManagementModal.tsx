@@ -153,13 +153,6 @@ export function TeamManagementModal({ isOpen, onOpenChange, project }: TeamManag
                             </div>
                         </div>
                         <div className="flex items-center gap-1">
-                            {project.lider_id === member.id ? (
-                                <Badge variant="secondary"><Crown className="mr-1 h-3 w-3" /> Líder</Badge>
-                            ) : (
-                                <Button title="Tornar líder" variant="ghost" size="icon" onClick={() => updateLeaderMutation.mutate({teamId: project.team_id!, lider_id: member.id})}>
-                                    <Crown className="h-4 w-4 text-muted-foreground" />
-                                </Button>
-                            )}
                             
                             {project.lider_id !== member.id && (
                                 <Button title="Remover do projeto" variant="ghost" size="icon" onClick={() => removeMemberMutation.mutate({ teamId: project.team_id!, userId: member.id })}>

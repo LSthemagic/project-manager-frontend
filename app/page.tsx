@@ -7,6 +7,7 @@ import api from '@/lib/api';
 async function getPublicStats() {
   try {
     const response = await api.get('/reports/public-stats');
+    
     return response.data;
   } catch (error) {
     console.error("Failed to fetch public stats:", error);
