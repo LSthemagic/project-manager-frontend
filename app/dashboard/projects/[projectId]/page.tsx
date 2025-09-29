@@ -12,7 +12,7 @@ import { ProjectForm } from '../../_components/ProjectForm';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Award, Check, Loader2, MoreHorizontal, Users } from 'lucide-react';
+import { Award, Check, Loader2, MoreHorizontal, Users, Edit, Trash } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { TaskForm } from './_components/TaskForm';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -215,8 +215,8 @@ export default function ProjectBoardPage({ params }: ProjectBoardPageProps) {
       <div className="flex flex-col h-full">
         <div className="mb-4 flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold">{project.nome}</h1>
-            <p className="text-muted-foreground">{project.descricao}</p>
+            <h1 className="sm:text-3xl font-bold text-2xl">{project.nome}</h1>
+            <p className="text-muted-foreground text-1xl">{project.descricao}</p>
           </div>
           <div className="flex items-center gap-2">
             {canManageProject && (
@@ -228,13 +228,13 @@ export default function ProjectBoardPage({ params }: ProjectBoardPageProps) {
                 Gerenciar Equipe
               </Button>
             )}
-            <Button
+            {/* <Button
               variant="outline"
               onClick={() => setIsMilestonesModalOpen(true)}
             >
               <Award className="mr-2 h-4 w-4" />
               Marcos
-            </Button>
+            </Button> */}
             {canManageProject && (
               <AlertDialog>
                 <DropdownMenu>
@@ -245,7 +245,8 @@ export default function ProjectBoardPage({ params }: ProjectBoardPageProps) {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem onClick={() => setIsEditModalOpen(true)}>
-                      Editar Projeto
+                      <Edit className="mr-2 h-4 w-4" />
+                       Editar Projeto
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => finishProjectMutation.mutate(projectId)}
@@ -255,6 +256,7 @@ export default function ProjectBoardPage({ params }: ProjectBoardPageProps) {
                     </DropdownMenuItem>
                     <AlertDialogTrigger asChild>
                       <DropdownMenuItem className="text-red-600">
+                        <Trash className="mr-2 h-4 w-4 text-red-600" />
                         Excluir Projeto
                       </DropdownMenuItem>
                     </AlertDialogTrigger>

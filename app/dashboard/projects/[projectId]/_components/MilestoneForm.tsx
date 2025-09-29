@@ -123,7 +123,7 @@ export function MilestoneForm({ isOpen, onOpenChange, projectId, milestone }: Mi
                         </FormControl>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={(date) => date < new Date()} initialFocus />
+                        <Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={(date) => date < new Date()} />
                         </PopoverContent>
                     </Popover>
                     <FormMessage />
