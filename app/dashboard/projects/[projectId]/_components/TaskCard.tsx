@@ -12,13 +12,26 @@ type TaskCardProps = {
 
 export function TaskCard({ task, onClick }: TaskCardProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
-    id: task.id,
+    id: task?.id || 0,
+    disabled: !task || !task.id || task.id <= 0,
   });
 
   const style = {
     transform: CSS.Translate.toString(transform),
     opacity: isDragging ? 0 : 1,
   };
+  
+  // Verificar se o task tem um ID válido após os hooks
+  if (!task || !task.id || task.id <= 0) {
+    console.warn("TaskCard recebeu task inválido:", task);
+    return (
+      <Card className="opacity-50 border-red-200">
+        <CardHeader className="p-4">
+          <CardTitle className="text-base text-red-500">Tarefa inválida</CardTitle>
+        </CardHeader>
+      </Card>
+    );
+  }
 
   return (
     <div ref={setNodeRef} style={style} {...listeners} {...attributes}>

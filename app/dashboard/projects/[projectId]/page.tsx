@@ -91,7 +91,12 @@ export default function ProjectBoardPage({ params }: ProjectBoardPageProps) {
 
   const taskMutation = useMutation({
     mutationFn: updateTaskStatus,
-    onError: () => {
+    onSuccess: (data, variables) => {
+      console.log("Task status updated successfully:", { data, variables });
+      toast.success("Tarefa movida com sucesso!");
+    },
+    onError: (error, variables) => {
+      console.error("Error updating task status:", { error, variables });
       // Em caso de erro, recarregar os dados para sincronizar
       queryClient.invalidateQueries({ queryKey: ["tasks", projectId] });
       toast.error("Erro ao mover tarefa. Tente novamente.");
@@ -127,7 +132,7 @@ export default function ProjectBoardPage({ params }: ProjectBoardPageProps) {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8,
+        distance: 3,
       },
     })
   );
@@ -135,30 +140,75 @@ export default function ProjectBoardPage({ params }: ProjectBoardPageProps) {
   const handleDragStart = (event: DragStartEvent) => {
     const taskId = Number(event.active.id);
     const task = tasks?.find(t => t.id === taskId);
+    console.log("Drag started:", { taskId, task, activeId: event.active.id });
     setActiveTask(task || null);
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
+    console.log("Drag ended:", { 
+      activeId: active.id, 
+      overId: over?.id, 
+      over: over,
+      event: event 
+    });
+    
     setActiveTask(null);
     
-    if (over && active.id !== over.id) {
-      const taskId = Number(active.id);
-      const newStatusId = Number(over.id);
-      const task = tasks?.find((t) => t.id === taskId);
-      if (task && task.status_id !== newStatusId) {
-        // Atualizar o cache imediatamente para mudança instantânea
-        queryClient.setQueryData<Task[]>(["tasks", projectId], (old) => {
-          if (!old) return [];
-          return old.map((t) =>
-            t.id === taskId ? { ...t, status_id: newStatusId } : t
-          );
-        });
-        
-        // Fazer a requisição para o servidor em background
-        taskMutation.mutate({ taskId: taskId, status_id: newStatusId });
-      }
+    // Validar se temos um drop válido
+    if (!over || !active.id) {
+      console.log("Drag cancelled - no drop target:", { over, activeId: active.id });
+      return;
     }
+    
+    const taskId = Number(active.id);
+    const newStatusId = Number(over.id);
+    
+    console.log("Converting IDs:", { 
+      activeIdRaw: active.id, 
+      overIdRaw: over.id, 
+      taskId, 
+      newStatusId,
+      activeIdType: typeof active.id,
+      overIdType: typeof over.id
+    });
+    
+    // Verificar se os IDs são números válidos
+    if (isNaN(taskId) || isNaN(newStatusId) || taskId <= 0 || newStatusId <= 0) {
+      console.warn("IDs inválidos para drag and drop:", { taskId, newStatusId, activeId: active.id, overId: over.id });
+      return;
+    }
+    
+    const task = tasks?.find((t) => t.id === taskId);
+    console.log("Found task for drag:", { 
+      task, 
+      taskId, 
+      newStatusId,
+      allTasks: tasks?.map(t => ({ id: t.id, title: t.titulo, status: t.status_id }))
+    });
+    
+    if (!task) {
+      console.warn("Task not found for ID:", taskId);
+      return;
+    }
+    
+    if (task.status_id === newStatusId) {
+      console.log("Task already in target status:", { taskId, statusId: newStatusId });
+      return;
+    }
+    
+    console.log("Updating task status:", { taskId, from: task.status_id, to: newStatusId });
+    
+    // Atualizar o cache imediatamente para mudança instantânea
+    queryClient.setQueryData<Task[]>(["tasks", projectId], (old) => {
+      if (!old) return [];
+      return old.map((t) =>
+        t.id === taskId ? { ...t, status_id: newStatusId } : t
+      );
+    });
+    
+    // Fazer a requisição para o servidor em background
+    taskMutation.mutate({ taskId: taskId, status_id: newStatusId });
   };
 
   const handleAddTask = (statusId: number) => {
@@ -308,7 +358,12 @@ export default function ProjectBoardPage({ params }: ProjectBoardPageProps) {
                 <KanbanColumn
                   key={status.id}
                   status={status}
-                  tasks={tasks.filter((task) => task.status_id === status.id)}
+                  tasks={tasks.filter((task) => 
+                    task.status_id === status.id && 
+                    task.id && 
+                    task.id > 0 &&
+                    task.titulo
+                  )}
                   onTaskClick={(taskId) => setSelectedTaskId(taskId)}
                   onAddTaskClick={handleAddTask}
                 />

@@ -12,12 +12,28 @@ type KanbanColumnProps = {
 };
 
 export function KanbanColumn({ status, tasks, onTaskClick, onAddTaskClick }: KanbanColumnProps) {
-  const { setNodeRef } = useDroppable({
-    id: status.id,
+  const { setNodeRef, isOver } = useDroppable({
+    id: status?.id || 0,
+    disabled: !status || !status.id || status.id <= 0,
   });
+  
+  // Verificar se o status tem um ID válido após os hooks
+  if (!status || !status.id || status.id <= 0) {
+    console.warn("KanbanColumn recebeu status inválido:", status);
+    return (
+      <div className="bg-red-50 border-red-200 border rounded-lg p-4 flex flex-col h-full">
+        <h2 className="font-bold text-red-500">Status inválido</h2>
+      </div>
+    );
+  }
 
   return (
-    <div ref={setNodeRef} className="bg-muted rounded-lg p-4 flex flex-col h-full">
+    <div 
+      ref={setNodeRef} 
+      className={`bg-muted rounded-lg p-4 flex flex-col h-full transition-colors ${
+        isOver ? 'bg-blue-50 ring-2 ring-blue-200' : ''
+      }`}
+    >
       <div className="flex justify-between items-center mb-4">
         <h2 className="font-bold">{status.nome}</h2>
         <Button variant="ghost" size="icon" onClick={() => onAddTaskClick(status.id)}>
