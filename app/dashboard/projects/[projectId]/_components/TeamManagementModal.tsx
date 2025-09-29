@@ -12,7 +12,6 @@ import { toast } from 'sonner';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useState } from 'react';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 
 type TeamManagementModalProps = {
   isOpen: boolean;
