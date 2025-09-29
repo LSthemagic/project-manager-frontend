@@ -10,8 +10,9 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Crown, Trash2, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { useState } from 'react';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 
 type TeamManagementModalProps = {
   isOpen: boolean;
@@ -29,8 +30,9 @@ const fetchProjectMembers = async (teamId: number): Promise<TeamMember[]> => {
   return data;
 };
 
+// CORREÇÃO APLICADA AQUI: O corpo da requisição agora envia `userId` e `papel`.
 const addMemberToTeam = ({ teamId, userId }: { teamId: number, userId: number }) => {
-    return api.post(`/teams/${teamId}/members`, { usuario_id: userId });
+    return api.post(`/teams/${teamId}/members`, { userId: userId, papel: 'membro' });
 }
 
 const removeMemberFromTeam = ({ teamId, userId }: { teamId: number, userId: number }) => {
@@ -41,10 +43,10 @@ const updateTeamLeader = ({ teamId, lider_id }: { teamId: number, lider_id: numb
     return api.put(`/teams/${teamId}`, { lider_id });
 }
 
-
 export function TeamManagementModal({ isOpen, onOpenChange, project }: TeamManagementModalProps) {
   const queryClient = useQueryClient();
   const [openAddMember, setOpenAddMember] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const { data: members = [], isLoading: isLoadingMembers } = useQuery<TeamMember[]>({
     queryKey: ['projectMembers', project.team_id],
@@ -61,7 +63,6 @@ export function TeamManagementModal({ isOpen, onOpenChange, project }: TeamManag
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projectMembers', project.team_id] });
       queryClient.invalidateQueries({ queryKey: ['project', String(project.id)] });
-      // Invalida a query de membros do projeto para atualizar a lista de responsáveis nas tarefas
       queryClient.invalidateQueries({ queryKey: ['projectMembers', project.id] });
     },
     onError: (error: any) => {
@@ -73,6 +74,7 @@ export function TeamManagementModal({ isOpen, onOpenChange, project }: TeamManag
     mutationOptions.onSuccess(...args);
     toast.success("Membro adicionado com sucesso!");
     setOpenAddMember(false);
+    setSearchTerm('');
   }});
   const removeMemberMutation = useMutation({ ...mutationOptions, mutationFn: removeMemberFromTeam, onSuccess: (...args) => {
       mutationOptions.onSuccess(...args);
@@ -87,7 +89,17 @@ export function TeamManagementModal({ isOpen, onOpenChange, project }: TeamManag
   const getInitials = (name: string) => name.split(' ').map((n) => n[0]).join('').toUpperCase();
   
   const memberIds = new Set(members.map(m => m.id));
-  const availableUsers = allUsers.filter(u => !memberIds.has(u.id));
+  const availableUsers = allUsers
+    .filter(u => !memberIds.has(u.id))
+    .filter(u => u.nome.toLowerCase().includes(searchTerm.toLowerCase()));
+
+  const handleAddMember = (userId: number) => {
+    if (!project.team_id) {
+        toast.error("ID da equipe não encontrado. Recarregue a página.");
+        return;
+    }
+    addMemberMutation.mutate({ teamId: project.team_id, userId: userId });
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -105,27 +117,27 @@ export function TeamManagementModal({ isOpen, onOpenChange, project }: TeamManag
                             Adicionar
                         </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="p-0 w-[300px]" side="bottom" align="end">
-                         <Command>
-                            <CommandInput placeholder="Buscar usuário..." />
-                            <CommandList>
-                                <CommandEmpty>Nenhum usuário encontrado.</CommandEmpty>
-                                <CommandGroup>
-                                    {availableUsers.map(user => (
-                                        <CommandItem
-                                            key={user.id}
-                                            value={user.nome}
-                                            // CORREÇÃO APLICADA AQUI: usamos onSelect e passamos uma função de callback
-                                            onSelect={() => {
-                                                addMemberMutation.mutate({ teamId: project.team_id!, userId: user.id })
-                                            }}
-                                        >
-                                        {user.nome}
-                                        </CommandItem>
-                                    ))}
-                                </CommandGroup>
-                            </CommandList>
-                        </Command>
+                    <PopoverContent className="p-1 w-[300px]" side="bottom" align="end">
+                         <div className="flex flex-col space-y-1">
+                            <Input 
+                                placeholder="Buscar usuário..." 
+                                value={searchTerm} 
+                                onChange={(e) => setSearchTerm(e.target.value)} 
+                                className="mb-2"
+                            />
+                            <div className="max-h-48 overflow-y-auto">
+                                {availableUsers.length > 0 ? availableUsers.map(user => (
+                                    <Button
+                                        key={user.id}
+                                        variant="ghost"
+                                        className="w-full justify-start font-normal"
+                                        onClick={() => handleAddMember(user.id)}
+                                    >
+                                      {user.nome}
+                                    </Button>
+                                )) : <p className="p-2 text-center text-sm text-muted-foreground">Nenhum usuário encontrado.</p>}
+                            </div>
+                         </div>
                     </PopoverContent>
                 </Popover>
             </div>
@@ -150,7 +162,6 @@ export function TeamManagementModal({ isOpen, onOpenChange, project }: TeamManag
                                 </Button>
                             )}
                             
-                            {/* Garante que o líder não pode ser removido */}
                             {project.lider_id !== member.id && (
                                 <Button title="Remover do projeto" variant="ghost" size="icon" onClick={() => removeMemberMutation.mutate({ teamId: project.team_id!, userId: member.id })}>
                                     <Trash2 className="h-4 w-4 text-destructive" />
