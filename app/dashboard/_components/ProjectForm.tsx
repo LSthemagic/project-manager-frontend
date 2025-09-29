@@ -46,7 +46,7 @@ const updateProject = ({ id, ...data }: any) => api.put(`/projects/${id}`, data)
 
 export function ProjectForm({ isOpen, onOpenChange, project }: ProjectFormProps) {
   const queryClient = useQueryClient();
-  const isEditing = !!project;
+  const isEditing = !!(project && project.id > 0);
 
   const { data: categories, isLoading: isLoadingCategories } = useQuery<Category[]>({
     queryKey: ['categories'],

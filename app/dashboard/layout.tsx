@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { UserNav } from "../_components/UserNav";
-import { LayoutDashboard, FolderKanban, Users, Settings, Tags, BarChart, History } from "lucide-react"; // Importar ícones
+import { LayoutDashboard, FolderKanban, Users, Settings, Tags, BarChart, History, Calendar } from "lucide-react"; // Importar ícones
 import { Searchbar } from "./_components/Searchbar";
 
 export default function DashboardLayout({
@@ -51,7 +51,9 @@ export default function DashboardLayout({
               <Link href="/dashboard" className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary">
                 <FolderKanban className="h-4 w-4" /> Projetos
               </Link>
-
+              <Link href="/dashboard/calendar" className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary">
+                    <Calendar className="h-4 w-4" /> Calendário
+                  </Link>
               {canSeeManagerLinks && (
                  <Link href="/dashboard/reports" className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary">
                     <BarChart className="h-4 w-4" /> Relatórios

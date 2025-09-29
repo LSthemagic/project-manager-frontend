@@ -5,6 +5,7 @@ import api from '@/lib/api';
 import { User, TeamMember, Project } from '@/lib/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Crown, Trash2, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
