@@ -3,16 +3,17 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { Project, Task, TaskStatus } from '@/lib/types';
-import { DndContext, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
+import { DndContext, PointerSensor, useSensor, useSensors, DragEndEvent, DragStartEvent, DragOverlay } from '@dnd-kit/core';
 import { KanbanColumn } from './_components/KanbanColumn';
-import { use, useState } from 'react';
+import { TaskCard } from './_components/TaskCard';
+import { useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { TaskDetailsModal } from './_components/TaskDetailsModal';
 import { ProjectForm } from '../../_components/ProjectForm';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Award, Check, Loader2, MoreHorizontal, Users, Edit, Trash } from 'lucide-react';
+import { Check, Loader2, MoreHorizontal, Users, Edit, Trash } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { TaskForm } from './_components/TaskForm';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -49,9 +50,9 @@ const deleteProject = (projectId: string) => {
 };
 
 type ProjectBoardPageProps = {
-  params: {
+  params: Promise<{
     projectId: string;
-  };
+  }>;
 };
 
 export default function ProjectBoardPage({ params }: ProjectBoardPageProps) {
@@ -66,6 +67,7 @@ export default function ProjectBoardPage({ params }: ProjectBoardPageProps) {
   const [selectedStatusId, setSelectedStatusId] = useState<number | null>(null);
   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
   const [isMilestonesModalOpen, setIsMilestonesModalOpen] = useState(false);
+  const [activeTask, setActiveTask] = useState<Task | null>(null);
 
   const {
     data: project,
@@ -155,8 +157,16 @@ export default function ProjectBoardPage({ params }: ProjectBoardPageProps) {
     })
   );
 
+  const handleDragStart = (event: DragStartEvent) => {
+    const taskId = Number(event.active.id);
+    const task = tasks?.find(t => t.id === taskId);
+    setActiveTask(task || null);
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
+    setActiveTask(null);
+    
     if (over && active.id !== over.id) {
       const taskId = Number(active.id);
       const newStatusId = Number(over.id);
@@ -314,7 +324,11 @@ export default function ProjectBoardPage({ params }: ProjectBoardPageProps) {
             )}
           </div>
         </div>
-        <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+        <DndContext 
+          sensors={sensors} 
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
           <div className="flex-1 overflow-x-auto pb-4">
             <div className="grid grid-flow-col auto-cols-[320px] gap-4 h-full">
               {statuses?.map((status) => (
@@ -328,6 +342,18 @@ export default function ProjectBoardPage({ params }: ProjectBoardPageProps) {
               ))}
             </div>
           </div>
+          <DragOverlay 
+            dropAnimation={null}
+          >
+            {activeTask ? (
+              <div className="w-80 opacity-95 rotate-2 scale-105 shadow-2xl">
+                <TaskCard 
+                  task={activeTask} 
+                  onClick={() => {}} 
+                />
+              </div>
+            ) : null}
+          </DragOverlay>
         </DndContext>
       </div>
     </>

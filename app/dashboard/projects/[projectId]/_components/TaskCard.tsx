@@ -11,12 +11,13 @@ type TaskCardProps = {
 };
 
 export function TaskCard({ task, onClick }: TaskCardProps) {
-  const { attributes, listeners, setNodeRef, transform } = useDraggable({
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: task.id,
   });
 
   const style = {
     transform: CSS.Translate.toString(transform),
+    opacity: isDragging ? 0 : 1,
   };
 
   return (
