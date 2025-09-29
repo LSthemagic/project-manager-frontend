@@ -100,18 +100,7 @@ export default async function LandingPage() {
           </div>
         </section>
         
-        <section id="about" className="w-full py-12 md:py-24 lg:py-32 flex justify-center">
-          <div className="container grid items-center justify-center gap-4 px-4 text-center md:px-6">
-            <div className="space-y-3">
-              <h2 className="text-3xl font-bold tracking-tighter md:text-4xl/tight">
-                Quem Somos
-              </h2>
-              <p className="mx-auto max-w-[600px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-gray-400">
-                Somos uma equipe apaixonada por produtividade e tecnologia, dedicada a criar ferramentas que simplificam o trabalho e impulsionam resultados. Nossa missão é transformar a maneira como as equipes colaboram.
-              </p>
-            </div>
-          </div>
-        </section>
+
       </main>
       <Footer />
     </div>

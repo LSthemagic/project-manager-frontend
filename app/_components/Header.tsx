@@ -19,10 +19,13 @@ export function Header() {
       </Link>
       
       <nav className="ml-auto hidden md:flex gap-4 sm:gap-6 items-center">
-        <Link className="text-sm font-medium hover:underline underline-offset-4" href="#features">
+        <Link className="text-sm font-medium hover:underline underline-offset-4 transition-colors" href="/#features">
           Funcionalidades
         </Link>
-        <Link className="text-sm font-medium hover:underline underline-offset-4" href="#about">
+        <Link className="text-sm font-medium hover:underline underline-offset-4 transition-colors" href="/#testimonials">
+          Depoimentos
+        </Link>
+        <Link className="text-sm font-medium hover:underline underline-offset-4 transition-colors" href="/about">
           Sobre
         </Link>
         <Link className="text-sm font-medium hover:underline underline-offset-4" href="/contact">
@@ -52,15 +55,22 @@ export function Header() {
         <div className="absolute top-14 left-0 right-0 bg-white dark:bg-gray-950 shadow-lg border-t md:hidden z-50">
           <nav className="flex flex-col p-4 space-y-4">
             <Link 
-              className="text-sm font-medium hover:underline underline-offset-4 py-2" 
-              href="#features"
+              className="text-sm font-medium hover:underline underline-offset-4 py-2 transition-colors" 
+              href="/#features"
               onClick={() => setIsMenuOpen(false)}
             >
               Funcionalidades
             </Link>
             <Link 
-              className="text-sm font-medium hover:underline underline-offset-4 py-2" 
-              href="#about"
+              className="text-sm font-medium hover:underline underline-offset-4 py-2 transition-colors" 
+              href="/#testimonials"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Depoimentos
+            </Link>
+            <Link 
+              className="text-sm font-medium hover:underline underline-offset-4 py-2 transition-colors" 
+              href="/about"
               onClick={() => setIsMenuOpen(false)}
             >
               Sobre
