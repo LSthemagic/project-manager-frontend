@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal } from 'lucide-react';
 import { CategoryForm } from './CategoryForm';
+import { toast } from 'sonner';
 
 const fetchCategories = async (): Promise<Category[]> => {
   const { data } = await api.get('/categories');
@@ -31,9 +32,10 @@ export default function CategoriesAdminPage() {
     mutationFn: deleteCategory,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
+      toast.success('Categoria excluída com sucesso!');
     },
     onError: () => {
-        alert("Não é possível excluir categorias que já estão em uso por projetos.");
+        toast.error("Não é possível excluir categorias que já estão em uso por projetos.");
     }
   });
 
@@ -48,9 +50,15 @@ export default function CategoriesAdminPage() {
   };
 
   const handleDelete = (categoryId: number) => {
-    if (confirm('Tem certeza de que deseja excluir esta categoria?')) {
-      deleteMutation.mutate(categoryId);
-    }
+    toast("Tem certeza?", {
+        action: {
+          label: "Excluir",
+          onClick: () => deleteMutation.mutate(categoryId),
+        },
+        cancel: {
+            label: "Cancelar",
+        }
+    });
   };
 
   if (isLoading) return <div>Carregando categorias...</div>;

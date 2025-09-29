@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { useEffect } from 'react';
 import { Textarea } from '@/components/ui/textarea';
+import { Loader2 } from 'lucide-react'; // Importar o ícone
 
 const formSchema = z.object({
   nome: z.string().min(3, { message: 'O nome deve ter pelo menos 3 caracteres.' }),
@@ -58,22 +59,23 @@ export function ProjectForm({ isOpen, onOpenChange, project }: ProjectFormProps)
     } else {
       form.reset({ nome: '', descricao: '', categoria_id: '' });
     }
-  }, [project, form]);
+  }, [project, form, isOpen]);
 
   const mutation = useMutation({
     mutationFn: isEditing ? updateProject : createProject,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
+      queryClient.invalidateQueries({ queryKey: ['project', project?.id] });
       onOpenChange(false);
     },
     onError: (error) => {
       console.error("Erro ao salvar projeto:", error);
-      // Futuramente, substituir por um toast de erro
     },
   });
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    mutation.mutate({ ...values, id: project?.id, categoria_id: Number(values.categoria_id) });
+    const projectData = { ...values, id: project?.id, categoria_id: Number(values.categoria_id) };
+    mutation.mutate(projectData);
   };
 
   return (
@@ -126,6 +128,7 @@ export function ProjectForm({ isOpen, onOpenChange, project }: ProjectFormProps)
             />
             <DialogFooter>
               <Button type="submit" disabled={mutation.isPending}>
+                {mutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {mutation.isPending ? 'Salvando...' : 'Salvar Projeto'}
               </Button>
             </DialogFooter>

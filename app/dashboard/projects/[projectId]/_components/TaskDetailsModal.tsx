@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CommentsTab } from './CommentsTab';
 import { SubtasksTab } from './SubtasksTab';
 import { AttachmentsTab } from './AttachmentsTab';
+import { TimeLogTab } from './TimeLogTab'; // Importar
 
 const fetchTaskDetails = async (taskId: number): Promise<Task> => {
   const { data } = await api.get(`/tasks/${taskId}`);
@@ -47,6 +48,7 @@ export function TaskDetailsModal({ taskId, onOpenChange }: TaskDetailsModalProps
               <TabsTrigger value="comments">Comentários</TabsTrigger>
               <TabsTrigger value="subtasks">Sub-tarefas</TabsTrigger>
               <TabsTrigger value="attachments">Anexos</TabsTrigger>
+              <TabsTrigger value="timelogs">Horas</TabsTrigger>
             </TabsList>
             <TabsContent value="details">
               <div className="space-y-4 py-4">
@@ -62,6 +64,9 @@ export function TaskDetailsModal({ taskId, onOpenChange }: TaskDetailsModalProps
             </TabsContent>
             <TabsContent value="attachments">
               <AttachmentsTab taskId={task.id} />
+            </TabsContent>
+            <TabsContent value="timelogs">
+                <TimeLogTab taskId={task.id} />
             </TabsContent>
           </Tabs>
         )}

@@ -5,15 +5,17 @@ import api from '@/lib/api';
 import { Project, Task, TaskStatus } from '@/lib/types';
 import { DndContext, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { KanbanColumn } from './_components/KanbanColumn';
-import { useState, use } from 'react';
+import { use, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { TaskDetailsModal } from './_components/TaskDetailsModal';
 import { ProjectForm } from '../../_components/ProjectForm';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { MoreHorizontal } from 'lucide-react';
+import { Loader2, MoreHorizontal } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { TaskForm } from './_components/TaskForm';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const fetchProjectDetails = async (projectId: string): Promise<Project> => {
   const { data } = await api.get(`/projects/${projectId}`);
@@ -53,6 +55,9 @@ export default function ProjectBoardPage({ params }: ProjectBoardPageProps) {
   
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  
+  const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
+  const [selectedStatusId, setSelectedStatusId] = useState<number | null>(null);
 
   const { data: project, isLoading: isLoadingProject } = useQuery<Project>({
     queryKey: ['project', projectId],
@@ -84,7 +89,6 @@ export default function ProjectBoardPage({ params }: ProjectBoardPageProps) {
     },
     onError: (error) => {
       console.error("Erro ao deletar projeto:", error);
-      // Adicionar toast de erro aqui no futuro
     }
   });
 
@@ -108,12 +112,40 @@ export default function ProjectBoardPage({ params }: ProjectBoardPageProps) {
     }
   };
   
+  const handleAddTask = (statusId: number) => {
+    setSelectedStatusId(statusId);
+    setIsTaskFormOpen(true);
+  };
+  
   const isLoading = isLoadingProject || isLoadingStatuses || isLoadingTasks;
 
-  if (isLoading) return <div>Carregando board...</div>;
-  if (!project || !statuses || !tasks) return <div>Não foi possível carregar os dados.</div>;
-
   const canManageProject = user?.tipo_usuario === 'admin' || user?.tipo_usuario === 'gerente';
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col h-full">
+        <div className="mb-4">
+          <Skeleton className="h-9 w-1/2" />
+          <Skeleton className="h-4 w-3/4 mt-2" />
+        </div>
+        <div className="flex-1 overflow-x-auto pb-4">
+          <div className="grid grid-flow-col auto-cols-[320px] gap-4 h-full">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div key={index} className="bg-muted rounded-lg p-4 flex flex-col">
+                <Skeleton className="h-6 w-1/3 mb-4" />
+                <div className="space-y-4">
+                  <Skeleton className="h-24 w-full" />
+                  <Skeleton className="h-16 w-full" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!project || !statuses || !tasks) return <div>Não foi possível carregar os dados.</div>;
 
   return (
     <>
@@ -126,6 +158,14 @@ export default function ProjectBoardPage({ params }: ProjectBoardPageProps) {
         taskId={selectedTaskId}
         onOpenChange={() => setSelectedTaskId(null)}
       />
+      {selectedStatusId && (
+        <TaskForm
+            isOpen={isTaskFormOpen}
+            onOpenChange={setIsTaskFormOpen}
+            projectId={projectId}
+            statusId={selectedStatusId}
+        />
+      )}
       <div className="flex flex-col h-full">
         <div className="mb-4 flex justify-between items-center">
           <div>
@@ -160,8 +200,12 @@ export default function ProjectBoardPage({ params }: ProjectBoardPageProps) {
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                     <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => deleteProjectMutation.mutate(projectId)}>
-                        Sim, excluir projeto
+                    <AlertDialogAction 
+                      disabled={deleteProjectMutation.isPending}
+                      onClick={() => deleteProjectMutation.mutate(projectId)}
+                    >
+                      {deleteProjectMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Sim, excluir projeto
                     </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
@@ -169,14 +213,15 @@ export default function ProjectBoardPage({ params }: ProjectBoardPageProps) {
           )}
         </div>
         <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-          <div className="flex-1 overflow-x-auto">
-            <div className="grid grid-flow-col auto-cols-[300px] gap-4 h-full">
+          <div className="flex-1 overflow-x-auto pb-4">
+            <div className="grid grid-flow-col auto-cols-[320px] gap-4 h-full">
               {statuses?.map((status) => (
                 <KanbanColumn
                   key={status.id}
                   status={status}
                   tasks={tasks.filter((task) => task.status_id === status.id)}
                   onTaskClick={(taskId) => setSelectedTaskId(taskId)}
+                  onAddTaskClick={handleAddTask}
                 />
               ))}
             </div>

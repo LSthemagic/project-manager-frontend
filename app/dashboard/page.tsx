@@ -25,6 +25,10 @@ export default function DashboardPage() {
     queryFn: fetchProjects,
   });
 
+  const handleCreateProjectClick = () => {
+    setIsModalOpen(true);
+  };
+
   if (isError) return <div>Ocorreu um erro ao buscar os projetos.</div>;
 
   return (
@@ -34,7 +38,7 @@ export default function DashboardPage() {
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">Meus Projetos</h1>
           {user?.tipo_usuario !== 'comum' && (
-            <Button onClick={() => setIsModalOpen(true)}>Criar Novo Projeto</Button>
+            <Button onClick={handleCreateProjectClick}>Criar Novo Projeto</Button>
           )}
         </div>
 
@@ -44,9 +48,9 @@ export default function DashboardPage() {
             <Skeleton className="h-[150px] rounded-lg" />
             <Skeleton className="h-[150px] rounded-lg" />
           </div>
-        ) : (
+        ) : projects && projects.length > 0 ? (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {projects?.map((project) => (
+            {projects.map((project) => (
               <Link href={`/dashboard/projects/${project.id}`} key={project.id}>
                 <Card className="hover:shadow-lg transition-shadow">
                   <CardHeader>
@@ -61,6 +65,16 @@ export default function DashboardPage() {
               </Link>
             ))}
           </div>
+        ) : (
+            <div className="text-center py-16 border-2 border-dashed rounded-lg">
+                <h2 className="text-xl font-semibold">Nenhum projeto encontrado</h2>
+                <p className="text-muted-foreground mt-2">Parece que você ainda não tem nenhum projeto.</p>
+                {user?.tipo_usuario !== 'comum' && (
+                    <Button onClick={handleCreateProjectClick} className="mt-4">
+                        Criar seu primeiro projeto
+                    </Button>
+                )}
+            </div>
         )}
       </div>
     </>

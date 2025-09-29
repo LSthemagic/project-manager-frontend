@@ -59,3 +59,12 @@ export type Category = {
   descricao: string | null;
   cor: string;
 };
+
+export type TimeLog = {
+    id: number;
+    horas: number;
+    descricao: string;
+    data_registro: string;
+    usuario_nome: string;
+    usuario_id: number;
+};

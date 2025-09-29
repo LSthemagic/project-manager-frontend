@@ -16,8 +16,9 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { useState } from 'react';
 import Link from 'next/link';
+import { toast } from 'sonner';
+import { Loader2 } from 'lucide-react';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Por favor, insira um email válido.' }),
@@ -25,7 +26,6 @@ const formSchema = z.object({
 });
 
 export function LoginForm() {
-  const [error, setError] = useState('');
   const router = useRouter();
   const { login } = useAuth();
 
@@ -38,12 +38,12 @@ export function LoginForm() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    setError('');
     try {
       await login(values.email, values.password);
+      toast.success('Login bem-sucedido!');
       router.push('/dashboard');
     } catch (err) {
-      setError('Falha no login. Verifique seu email e senha.');
+      toast.error('Falha no login. Verifique seu email e senha.');
     }
   }
 
@@ -81,8 +81,10 @@ export function LoginForm() {
                 </FormItem>
               )}
             />
-            {error && <p className="text-sm font-medium text-destructive">{error}</p>}
-            <Button type="submit" className="w-full">Entrar</Button>
+            <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
+                {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Entrar
+            </Button>
           </form>
         </Form>
       </CardContent>

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { UserNav } from "../_components/UserNav";
 import { LayoutDashboard, FolderKanban, Users, Settings } from "lucide-react";
+import { Searchbar } from "./_components/Searchbar"; // Importar
 
 export default function DashboardLayout({
   children,
@@ -60,7 +61,6 @@ export default function DashboardLayout({
                     <Users className="h-4 w-4" />
                     Usuários
                   </Link>
-                  {/* ADICIONE ESTE NOVO LINK AQUI */}
                   <Link
                     href="/dashboard/admin/categories"
                     className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
@@ -77,7 +77,7 @@ export default function DashboardLayout({
       <div className="flex flex-col flex-1">
         <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6">
           <div className="w-full flex-1">
-            {/* Search bar can be added here later */}
+            <Searchbar />
           </div>
           <UserNav />
         </header>
