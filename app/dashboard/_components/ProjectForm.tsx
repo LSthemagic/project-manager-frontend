@@ -27,8 +27,10 @@ const formSchema = z.object({
   prioridade: z.enum(['baixa', 'media', 'alta']),
   data_inicio: z.date().optional().nullable(),
   data_fim: z.date().optional().nullable(),
-  orcamento: z.coerce.number().optional().nullable(),
+  orcamento: z.union([z.number(), z.null(), z.undefined()]).optional(),
 });
+
+type FormData = z.infer<typeof formSchema>;
 
 type ProjectFormProps = {
   isOpen: boolean;
@@ -41,8 +43,10 @@ const fetchCategories = async (): Promise<Category[]> => {
   return data;
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const createProject = (data: any) => api.post('/projects', data);
-const updateProject = ({ id, ...data }: any) => api.put(`/projects/${id}`, data);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const updateProject = (data: any) => api.put(`/projects/${data.id}`, data);
 
 export function ProjectForm({ isOpen, onOpenChange, project }: ProjectFormProps) {
   const queryClient = useQueryClient();
@@ -109,13 +113,18 @@ export function ProjectForm({ isOpen, onOpenChange, project }: ProjectFormProps)
     },
   });
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
+  const onSubmit = (values: FormData) => {
     const projectData = { 
         ...values, 
-        id: project?.id, 
-        categoria_id: Number(values.categoria_id) 
+        categoria_id: Number(values.categoria_id),
+        ...(project?.id && { id: project.id })
     };
-    mutation.mutate(projectData);
+    
+    if (isEditing && project?.id) {
+      mutation.mutate({ ...projectData, id: project.id });
+    } else {
+      mutation.mutate(projectData);
+    }
   };
 
   return (
@@ -212,7 +221,16 @@ export function ProjectForm({ isOpen, onOpenChange, project }: ProjectFormProps)
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>Orçamento (R$)</FormLabel>
-                    <FormControl><Input type="number" step="0.01" placeholder="0,00" {...field} /></FormControl>
+                    <FormControl>
+                        <Input 
+                            type="number" 
+                            step="0.01" 
+                            placeholder="0,00" 
+                            {...field}
+                            value={field.value || ''}
+                            onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
+                        />
+                    </FormControl>
                     <FormMessage />
                     </FormItem>
                 )}
@@ -224,36 +242,34 @@ export function ProjectForm({ isOpen, onOpenChange, project }: ProjectFormProps)
                     name="data_inicio"
                     render={({ field }) => (
                         <FormItem className="flex flex-col">
-                        <FormLabel>Data de Início</FormLabel>
-                        <Popover>
-                            <PopoverTrigger asChild>
-                            <FormControl>
-                                <Button
-                                variant={"outline"}
-                                className={cn(
-                                    "pl-3 text-left font-normal",
-                                    !field.value && "text-muted-foreground"
-                                )}
-                                >
-                                {field.value ? (
-                                    format(field.value, "PPP")
-                                ) : (
-                                    <span>Escolha uma data</span>
-                                )}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                </Button>
-                            </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                                mode="single"
-                                selected={field.value || undefined}
-                                onSelect={field.onChange}
-                                initialFocus
-                            />
-                            </PopoverContent>
-                        </Popover>
-                        <FormMessage />
+                            <FormLabel>Data de Início</FormLabel>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <FormControl>
+                                        <Button
+                                            variant="outline"
+                                            className={cn(
+                                                "w-full justify-start text-left font-normal",
+                                                !field.value && "text-muted-foreground"
+                                            )}
+                                        >
+                                            {field.value ? (
+                                                format(field.value, "PPP")
+                                            ) : (
+                                                <span>Escolha uma data</span>
+                                            )}
+                                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                        </Button>
+                                    </FormControl>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                    <Calendar
+                                        selected={field.value || undefined}
+                                        onSelect={field.onChange}
+                                    />
+                                </PopoverContent>
+                            </Popover>
+                            <FormMessage />
                         </FormItem>
                     )}
                 />
@@ -262,36 +278,34 @@ export function ProjectForm({ isOpen, onOpenChange, project }: ProjectFormProps)
                     name="data_fim"
                     render={({ field }) => (
                         <FormItem className="flex flex-col">
-                        <FormLabel>Data Final</FormLabel>
-                        <Popover>
-                            <PopoverTrigger asChild>
-                            <FormControl>
-                                <Button
-                                variant={"outline"}
-                                className={cn(
-                                    "pl-3 text-left font-normal",
-                                    !field.value && "text-muted-foreground"
-                                )}
-                                >
-                                {field.value ? (
-                                    format(field.value, "PPP")
-                                ) : (
-                                    <span>Escolha uma data</span>
-                                )}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                </Button>
-                            </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                                mode="single"
-                                selected={field.value || undefined}
-                                onSelect={field.onChange}
-                                initialFocus
-                            />
-                            </PopoverContent>
-                        </Popover>
-                        <FormMessage />
+                            <FormLabel>Data Final</FormLabel>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <FormControl>
+                                        <Button
+                                            variant="outline"
+                                            className={cn(
+                                                "w-full justify-start text-left font-normal",
+                                                !field.value && "text-muted-foreground"
+                                            )}
+                                        >
+                                            {field.value ? (
+                                                format(field.value, "PPP")
+                                            ) : (
+                                                <span>Escolha uma data</span>
+                                            )}
+                                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                        </Button>
+                                    </FormControl>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                    <Calendar
+                                        selected={field.value || undefined}
+                                        onSelect={field.onChange}
+                                    />
+                                </PopoverContent>
+                            </Popover>
+                            <FormMessage />
                         </FormItem>
                     )}
                 />
