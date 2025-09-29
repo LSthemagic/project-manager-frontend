@@ -92,34 +92,10 @@ export default function ProjectBoardPage({ params }: ProjectBoardPageProps) {
 
   const taskMutation = useMutation({
     mutationFn: updateTaskStatus,
-    onMutate: async ({ taskId, status_id }) => {
-      // Cancelar queries em andamento para não sobrescrever a atualização otimista
-      await queryClient.cancelQueries({ queryKey: ["tasks", projectId] });
-
-      // Snapshot do estado anterior para rollback se necessário
-      const previousTasks = queryClient.getQueryData<Task[]>(["tasks", projectId]);
-
-      // Atualização otimista: atualizar o cache imediatamente
-      queryClient.setQueryData<Task[]>(["tasks", projectId], (old) => {
-        if (!old) return [];
-        return old.map((task) =>
-          task.id === taskId ? { ...task, status_id } : task
-        );
-      });
-
-      // Retornar contexto com dados anteriores para rollback
-      return { previousTasks };
-    },
-    onError: (err, variables, context) => {
-      // Rollback: restaurar estado anterior se der erro
-      if (context?.previousTasks) {
-        queryClient.setQueryData(["tasks", projectId], context.previousTasks);
-      }
-      toast.error("Erro ao mover tarefa. Tente novamente.");
-    },
-    onSettled: () => {
-      // Sempre invalidar as queries no final para garantir sincronização
+    onError: () => {
+      // Em caso de erro, recarregar os dados para sincronizar
       queryClient.invalidateQueries({ queryKey: ["tasks", projectId] });
+      toast.error("Erro ao mover tarefa. Tente novamente.");
     },
   });
 
@@ -172,6 +148,15 @@ export default function ProjectBoardPage({ params }: ProjectBoardPageProps) {
       const newStatusId = Number(over.id);
       const task = tasks?.find((t) => t.id === taskId);
       if (task && task.status_id !== newStatusId) {
+        // Atualizar o cache imediatamente para mudança instantânea
+        queryClient.setQueryData<Task[]>(["tasks", projectId], (old) => {
+          if (!old) return [];
+          return old.map((t) =>
+            t.id === taskId ? { ...t, status_id: newStatusId } : t
+          );
+        });
+        
+        // Fazer a requisição para o servidor em background
         taskMutation.mutate({ taskId: taskId, status_id: newStatusId });
       }
     }
@@ -346,7 +331,7 @@ export default function ProjectBoardPage({ params }: ProjectBoardPageProps) {
             dropAnimation={null}
           >
             {activeTask ? (
-              <div className="w-80 opacity-95 rotate-2 scale-105 shadow-2xl">
+              <div className="w-80">
                 <TaskCard 
                   task={activeTask} 
                   onClick={() => {}} 
