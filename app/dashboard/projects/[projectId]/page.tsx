@@ -215,8 +215,8 @@ export default function ProjectBoardPage({ params }: ProjectBoardPageProps) {
       <div className="flex flex-col h-full">
         <div className="mb-4 flex justify-between items-center">
           <div>
-            <h1 className="sm:text-3xl font-bold text-2xl">{project.nome}</h1>
-            <p className="text-muted-foreground text-1xl">{project.descricao}</p>
+            <h1 className="sm:text-3xl font-bold text-1xl">{project.nome}</h1>
+            <p className="text-muted-foreground text-shadow-secondary">{project.descricao}</p>
           </div>
           <div className="flex items-center gap-2">
             {canManageProject && (

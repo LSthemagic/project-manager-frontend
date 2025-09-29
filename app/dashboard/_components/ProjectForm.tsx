@@ -53,7 +53,14 @@ const formSchema = z.object({
   prioridade: z.enum(["baixa", "media", "alta"]),
   data_inicio: z.date().optional().nullable(),
   data_fim: z.date().optional().nullable(),
-  orcamento: z.union([z.number(), z.null(), z.undefined()]).optional(),
+  orcamento: z.union([
+    z.number(),
+    z.string().refine((val) => val === "" || !isNaN(parseFloat(val.replace(",", "."))), {
+      message: "Deve ser um número válido"
+    }),
+    z.null(),
+    z.undefined()
+  ]).optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -116,7 +123,7 @@ export function ProjectForm({
             ? new Date(project.data_inicio)
             : null,
           data_fim: project.data_fim ? new Date(project.data_fim) : null,
-          orcamento: project.orcamento || 0,
+          orcamento: project.orcamento ? Number(project.orcamento) : 0,
         });
       } else {
         form.reset({
@@ -157,6 +164,18 @@ export function ProjectForm({
     const projectData = {
       ...values,
       categoria_id: Number(values.categoria_id),
+      // Garantir que orçamento seja number ou null
+      orcamento: (() => {
+        if (values.orcamento === undefined || values.orcamento === null || values.orcamento === "") {
+          return null;
+        }
+        if (typeof values.orcamento === "string") {
+          const normalizedValue = values.orcamento.replace(",", ".");
+          const parsedValue = parseFloat(normalizedValue);
+          return isNaN(parsedValue) ? null : parsedValue;
+        }
+        return Number(values.orcamento);
+      })(),
       ...(project?.id && { id: project.id }),
     };
 
@@ -306,7 +325,14 @@ export function ProjectForm({
                   value={field.value !== null && field.value !== undefined ? String(field.value) : ""}
                   onChange={(e) => {
                     const value = e.target.value;
-                    field.onChange(value ? parseFloat(value) : undefined);
+                    if (value === "") {
+                      field.onChange(undefined);
+                    } else {
+                      // Substituir vírgula por ponto antes de fazer parseFloat
+                      const normalizedValue = value.replace(",", ".");
+                      const parsedValue = parseFloat(normalizedValue);
+                      field.onChange(isNaN(parsedValue) ? undefined : parsedValue);
+                    }
                   }}
                   />
                 </FormControl>
