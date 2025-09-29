@@ -84,7 +84,6 @@ export type Etiqueta = {
   cor: string;
 }
 
-// Novo tipo adicionado
 export type TeamMember = {
     id: number;
     nome: string;

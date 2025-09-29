@@ -26,7 +26,7 @@ const fetchProjectDetails = async (projectId: string): Promise<Project> => {
 };
 
 const fetchTaskStatuses = async (): Promise<TaskStatus[]> => {
-  const { data } = await api.get('/task-statuses');
+  const { data } = await api.get("/task-statuses");
   return data;
 };
 
@@ -72,34 +72,38 @@ export default function ProjectBoardPage({ params }: ProjectBoardPageProps) {
     isLoading: isLoadingProject,
     isError: isErrorProject,
   } = useQuery<Project>({
-    queryKey: ['project', projectId],
+    queryKey: ["project", projectId],
     queryFn: () => fetchProjectDetails(projectId),
   });
 
-  const { data: statuses, isLoading: isLoadingStatuses } = useQuery<TaskStatus[]>({
-    queryKey: ['taskStatuses'],
+  const { data: statuses, isLoading: isLoadingStatuses } = useQuery<
+    TaskStatus[]
+  >({
+    queryKey: ["taskStatuses"],
     queryFn: fetchTaskStatuses,
   });
 
   const { data: tasks, isLoading: isLoadingTasks } = useQuery<Task[]>({
-    queryKey: ['tasks', projectId],
+    queryKey: ["tasks", projectId],
     queryFn: () => fetchTasksForProject(projectId),
   });
 
   const taskMutation = useMutation({
     mutationFn: updateTaskStatus,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks', projectId] });
+      queryClient.invalidateQueries({ queryKey: ["tasks", projectId] });
     },
   });
 
   const deleteProjectMutation = useMutation({
     mutationFn: deleteProject,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
-      router.push('/dashboard');
+      toast.success("Projeto excluído com sucesso!");
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      router.push("/dashboard");
     },
     onError: (error) => {
+      toast.error("Erro ao excluir projeto.");
       console.error("Erro ao deletar projeto:", error);
     },
   });
@@ -108,8 +112,8 @@ export default function ProjectBoardPage({ params }: ProjectBoardPageProps) {
     mutationFn: finishProject,
     onSuccess: () => {
       toast.success("Projeto finalizado com sucesso!");
-      queryClient.invalidateQueries({ queryKey: ['project', projectId] });
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      queryClient.invalidateQueries({ queryKey: ["project", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
     },
     onError: (error: any) => {
       toast.error(
@@ -144,7 +148,8 @@ export default function ProjectBoardPage({ params }: ProjectBoardPageProps) {
   };
 
   const isLoading = isLoadingProject || isLoadingStatuses || isLoadingTasks;
-  const canManageProject = user?.tipo_usuario === 'admin' || user?.tipo_usuario === 'gerente';
+  const canManageProject =
+    user?.tipo_usuario === "admin" || user?.tipo_usuario === "gerente";
 
   if (isLoading) {
     return (
@@ -156,7 +161,10 @@ export default function ProjectBoardPage({ params }: ProjectBoardPageProps) {
         <div className="flex-1 overflow-x-auto pb-4">
           <div className="grid grid-flow-col auto-cols-[320px] gap-4 h-full">
             {Array.from({ length: 4 }).map((_, index) => (
-              <div key={index} className="bg-muted rounded-lg p-4 flex flex-col">
+              <div
+                key={index}
+                className="bg-muted rounded-lg p-4 flex flex-col"
+              >
                 <Skeleton className="h-6 w-1/3 mb-4" />
                 <div className="space-y-4">
                   <Skeleton className="h-24 w-full" />
@@ -184,19 +192,11 @@ export default function ProjectBoardPage({ params }: ProjectBoardPageProps) {
         taskId={selectedTaskId}
         onOpenChange={() => setSelectedTaskId(null)}
       />
-      {/* CORREÇÃO: Renderize os modais mesmo que o `project` ainda não tenha `team_id`, */}
-      {/* mas passe o `project` para eles. O modal em si lidará com a ausência de dados. */}
       <MilestonesModal
         isOpen={isMilestonesModalOpen}
         onOpenChange={setIsMilestonesModalOpen}
         projectId={project.id}
       />
-      <TeamManagementModal
-          isOpen={isTeamModalOpen}
-          onOpenChange={setIsTeamModalOpen}
-          project={project}
-      />
-
       {selectedStatusId && (
         <TaskForm
           isOpen={isTaskFormOpen}
@@ -205,7 +205,13 @@ export default function ProjectBoardPage({ params }: ProjectBoardPageProps) {
           statusId={selectedStatusId}
         />
       )}
-     
+      {project.team_id && (
+        <TeamManagementModal
+          isOpen={isTeamModalOpen}
+          onOpenChange={setIsTeamModalOpen}
+          project={project}
+        />
+      )}
       <div className="flex flex-col h-full">
         <div className="mb-4 flex justify-between items-center">
           <div>
