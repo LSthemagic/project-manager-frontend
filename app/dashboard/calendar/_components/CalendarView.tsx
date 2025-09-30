@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { 
   format, 
-  parseISO, 
   isValid, 
   startOfDay,
   endOfDay,
@@ -29,6 +28,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import api from '@/lib/api';
 import { Project as BaseProject } from '@/lib/types';
 import { ProjectForm } from '../../_components/ProjectForm';
+import { utcIsoToLocalDateOnly, localDateToUtcIso } from '@/lib/utils';
 
 interface Project extends BaseProject {
   data_criacao: string;
@@ -97,21 +97,7 @@ export function CalendarView() {
     );
   }, [projects, filterStatus]);
 
-  // Helper: converte uma ISO UTC (com Z) para uma Date local representando a mesma data (ignorando o horário)
-  // Ex: '2025-09-29T00:00:00.000Z' -> new Date(2025, 8, 29) (meio-dia local não envolvido)
-  const utcIsoToLocalDateOnly = (isoString: string | null | undefined) => {
-    if (!isoString) return null;
-    try {
-      const d = parseISO(isoString);
-      // extrair componentes UTC e construir Date local com os mesmos Y/M/D
-      const y = d.getUTCFullYear();
-      const m = d.getUTCMonth();
-      const dt = d.getUTCDate();
-      return new Date(y, m, dt);
-    } catch {
-      return null;
-    }
-  };
+  // Use shared helper from lib/utils
 
   // Obter projetos que se estendem por um período - memoizado
   const periodProjects = useMemo(() => {
@@ -383,7 +369,9 @@ export function CalendarView() {
           descricao: '',
           status: 'planejamento' as const,
           prioridade: 'media' as const,
-          data_inicio: selectedDateForProject.toISOString(),
+          // When creating from a picked local date, convert to UTC-midnight ISO
+          // to keep backend date-only expectations consistent.
+          data_inicio: localDateToUtcIso(selectedDateForProject)!,
           data_fim: null,
           orcamento: null,
           categoria_id: 1

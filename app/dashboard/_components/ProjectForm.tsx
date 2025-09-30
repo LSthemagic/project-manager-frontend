@@ -39,7 +39,7 @@ import {
 } from "@/components/ui/popover";
 import { CalendarIcon, Loader2 } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
-import { cn } from "@/lib/utils";
+import { cn, utcIsoToLocalDateOnly, localDateToUtcIso } from "@/lib/utils";
 import { format } from "date-fns";
 import { toast } from "sonner";
 
@@ -81,6 +81,19 @@ const createProject = (data: any) => api.post("/projects", data);
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const updateProject = (data: any) => api.put(`/projects/${data.id}`, data);
 
+// Outgoing payload type for projects (API expects date fields as ISO strings or null)
+type ProjectPayload = {
+  id?: number;
+  nome: string;
+  descricao?: string | null;
+  categoria_id: number;
+  status: string;
+  prioridade: string;
+  data_inicio?: string | null;
+  data_fim?: string | null;
+  orcamento?: number | null;
+};
+
 export function ProjectForm({
   isOpen,
   onOpenChange,
@@ -119,10 +132,12 @@ export function ProjectForm({
           categoria_id: String(project.categoria_id),
           status: project.status,
           prioridade: project.prioridade,
+          // Use utcIsoToLocalDateOnly to avoid timezone shifts when project
+          // dates are encoded as UTC-midnight ISO strings.
           data_inicio: project.data_inicio
-            ? new Date(project.data_inicio)
+            ? utcIsoToLocalDateOnly(project.data_inicio)
             : null,
-          data_fim: project.data_fim ? new Date(project.data_fim) : null,
+          data_fim: project.data_fim ? utcIsoToLocalDateOnly(project.data_fim) : null,
           orcamento: project.orcamento ? Number(project.orcamento) : 0,
         });
       } else {
@@ -161,23 +176,40 @@ export function ProjectForm({
   });
 
   const onSubmit = (values: FormData) => {
-    const projectData = {
-      ...values,
+    const projectData: ProjectPayload = {
+      id: project?.id,
+      nome: values.nome,
+      descricao: values.descricao || null,
       categoria_id: Number(values.categoria_id),
-      // Garantir que orçamento seja number ou null
-      orcamento: (() => {
-        if (values.orcamento === undefined || values.orcamento === null || values.orcamento === "") {
-          return null;
-        }
-        if (typeof values.orcamento === "string") {
-          const normalizedValue = values.orcamento.replace(",", ".");
-          const parsedValue = parseFloat(normalizedValue);
-          return isNaN(parsedValue) ? null : parsedValue;
-        }
-        return Number(values.orcamento);
-      })(),
-      ...(project?.id && { id: project.id }),
+      status: values.status,
+      prioridade: values.prioridade,
+      data_inicio: null,
+      data_fim: null,
+      orcamento: null,
     };
+
+    // Garantir que orçamento seja number ou null
+    projectData.orcamento = (() => {
+      if (values.orcamento === undefined || values.orcamento === null || values.orcamento === "") {
+        return null;
+      }
+      if (typeof values.orcamento === "string") {
+        const normalizedValue = values.orcamento.replace(",", ".");
+        const parsedValue = parseFloat(normalizedValue);
+        return isNaN(parsedValue) ? null : parsedValue;
+      }
+      return Number(values.orcamento);
+    })();
+
+    // Convert local Date values back to UTC-midnight ISO strings for the API
+    // if they exist. This keeps consistency between what we display (local)
+    // and what the backend expects (UTC date-only ISO).
+    if (values.data_inicio) {
+      projectData.data_inicio = localDateToUtcIso(values.data_inicio);
+    }
+    if (values.data_fim) {
+      projectData.data_fim = localDateToUtcIso(values.data_fim);
+    }
 
     if (isEditing && project?.id) {
       mutation.mutate({ ...projectData, id: project.id });
