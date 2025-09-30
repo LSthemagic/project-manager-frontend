@@ -22,6 +22,7 @@ import {
   addMonths,
   subMonths
 } from 'date-fns';
+import { toZonedTime } from 'date-fns-tz';
 import { ptBR } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import api from '@/lib/api';
@@ -95,26 +96,28 @@ export function CalendarView() {
     );
   }, [projects, filterStatus]);
 
+  // Obter timezone do usuário
+  const userTimeZone = typeof window !== 'undefined' ? Intl.DateTimeFormat().resolvedOptions().timeZone : 'America/Sao_Paulo';
+
   // Obter projetos que se estendem por um período - memoizado
   const periodProjects = useMemo(() => {
     return filteredProjects.filter(project => {
-      const startDate = project.data_inicio ? parseISO(project.data_inicio) : null;
-      const endDate = project.data_fim ? parseISO(project.data_fim) : null;
-      
+      const startDate = project.data_inicio ? toZonedTime(parseISO(project.data_inicio), userTimeZone) : null;
+      const endDate = project.data_fim ? toZonedTime(parseISO(project.data_fim), userTimeZone) : null;
       return startDate && endDate && isValid(startDate) && isValid(endDate);
     }).map(project => ({
       ...project,
-      startDate: parseISO(project.data_inicio!),
-      endDate: parseISO(project.data_fim!)
+      startDate: toZonedTime(parseISO(project.data_inicio!), userTimeZone),
+      endDate: toZonedTime(parseISO(project.data_fim!), userTimeZone)
     }));
-  }, [filteredProjects]);
+  }, [filteredProjects, userTimeZone]);
 
   // Obter projetos pontuais (sem período definido) - callback otimizado
   const getPointProjects = useCallback((date: Date) => {
     return filteredProjects.filter(project => {
-      const startDate = project.data_inicio ? parseISO(project.data_inicio) : null;
-      const endDate = project.data_fim ? parseISO(project.data_fim) : null;
-      const creationDate = parseISO(project.data_criacao);
+      const startDate = project.data_inicio ? toZonedTime(parseISO(project.data_inicio), userTimeZone) : null;
+      const endDate = project.data_fim ? toZonedTime(parseISO(project.data_fim), userTimeZone) : null;
+      const creationDate = toZonedTime(parseISO(project.data_criacao), userTimeZone);
 
       // Se não tem período definido, mostra na data de criação
       if (!startDate || !endDate) {
@@ -123,7 +126,7 @@ export function CalendarView() {
 
       return false;
     });
-  }, [filteredProjects]);
+  }, [filteredProjects, userTimeZone]);
 
   // Handler para abrir modal de criação de projeto - otimizado
   const handleDateClick = useCallback((date: Date) => {
