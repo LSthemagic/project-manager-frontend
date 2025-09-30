@@ -48,6 +48,11 @@ export type Comment = {
   usuario_id: number;
   data_criacao: string;
   usuario_nome: string;
+  usuario_email?: string;
+  tipo_usuario?: 'admin' | 'gerente' | 'comum' | string;
+  usuario_profile_picture?: string;
+  nome: string;
+  email: string;
 };
 
 export type Subtask = {

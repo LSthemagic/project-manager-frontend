@@ -55,9 +55,10 @@ export default function CategoriesAdminPage() {
           label: "Excluir",
           onClick: () => deleteMutation.mutate(categoryId),
         },
-        cancel: {
-            label: "Cancelar",
-        }
+    cancel: {
+      label: "Cancelar",
+      onClick: () => {},
+    }
     });
   };
 

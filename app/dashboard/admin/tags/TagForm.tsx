@@ -47,24 +47,31 @@ export function TagForm({ isOpen, onOpenChange, etiqueta }: TagFormProps) {
     }
   }, [etiqueta, form]);
 
-  const mutation = useMutation({
-    mutationFn: isEditing ? updateTag : createTag,
+  type TagPayload = z.infer<typeof formSchema> | ({ id: number } & z.infer<typeof formSchema>);
+  function isTagWithId(p: TagPayload): p is { id: number } & z.infer<typeof formSchema> {
+    return typeof (p as { id?: unknown }).id === 'number';
+  }
+
+  const mutation = useMutation<unknown, unknown, TagPayload>({
+    mutationFn: (payload: TagPayload) => {
+      if (isTagWithId(payload)) {
+        return updateTag(payload);
+      }
+      return createTag(payload as z.infer<typeof formSchema>);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tags'] });
       toast.success(`Etiqueta ${isEditing ? 'atualizada' : 'criada'} com sucesso!`);
       onOpenChange(false);
     },
-    onError: (error) => {
+    onError: (error: unknown) => {
       toast.error("Ocorreu um erro ao salvar a etiqueta.");
       console.error("Erro ao salvar etiqueta:", error);
     },
   });
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    const dataToSend: any = values;
-    if (isEditing) {
-      dataToSend.id = etiqueta.id;
-    }
+    const dataToSend: TagPayload = isEditing && etiqueta ? { ...values, id: etiqueta.id } : values;
     mutation.mutate(dataToSend);
   };
 

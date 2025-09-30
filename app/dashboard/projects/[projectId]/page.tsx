@@ -65,7 +65,7 @@ export default function ProjectBoardPage({ params }: ProjectBoardPageProps) {
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
   const [selectedStatusId, setSelectedStatusId] = useState<number | null>(null);
   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
-  const [isMilestonesModalOpen, setIsMilestonesModalOpen] = useState(false);
+  // const [isMilestonesModalOpen, setIsMilestonesModalOpen] = useState(false); // não utilizado
   const [activeTask, setActiveTask] = useState<Task | null>(null);
 
   const {

@@ -42,7 +42,7 @@ export function LoginForm() {
       await login(values.email, values.password);
       toast.success('Login bem-sucedido!');
       router.push('/dashboard');
-    } catch (err) {
+    } catch {
       toast.error('Falha no login. Verifique seu email e senha.');
     }
   }

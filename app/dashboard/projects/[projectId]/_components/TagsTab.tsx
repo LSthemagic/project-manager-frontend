@@ -52,9 +52,10 @@ export function TagsTab({ taskId }: TagsTabProps) {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['taskTags', taskId] });
         },
-        onError: (error: any) => {
-            toast.error(error.response?.data?.message || "Ocorreu um erro.");
-        }
+        onError: (error: unknown) => {
+                const maybe = error as { response?: { data?: { message?: string } } } | undefined;
+                toast.error(maybe?.response?.data?.message || "Ocorreu um erro.");
+            }
     };
 
     const addMutation = useMutation({ ...mutationOptions, mutationFn: addTagToTask });

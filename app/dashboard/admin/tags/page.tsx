@@ -50,10 +50,10 @@ export default function TagsAdminPage() {
   };
 
   const handleDelete = (tagId: number) => {
-    toast("Tem certeza que deseja excluir esta etiqueta?", {
-        action: { label: "Excluir", onClick: () => deleteMutation.mutate(tagId) },
-        cancel: { label: "Cancelar" }
-    });
+  toast("Tem certeza que deseja excluir esta etiqueta?", {
+    action: { label: "Excluir", onClick: () => deleteMutation.mutate(tagId) },
+    cancel: { label: "Cancelar", onClick: () => {} }
+  });
   };
 
   if (isLoading) return <div>Carregando etiquetas...</div>;

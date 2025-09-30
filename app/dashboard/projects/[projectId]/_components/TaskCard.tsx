@@ -11,10 +11,7 @@ import { CalendarDays, Clock, AlertTriangle, Circle, TrendingUp, MessageCircle, 
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
-type TaskCardProps = {
-  task: Task;
-  onClick: () => void;
-};
+// TaskCardProps removido: usamos TaskExtra diretamente abaixo
 
 // Tipos extras vindos do backend
 type TaskExtra = Task & {

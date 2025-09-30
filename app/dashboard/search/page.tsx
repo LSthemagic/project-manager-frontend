@@ -37,7 +37,7 @@ function SearchResults() {
   if (isLoading) {
     return (
         <div>
-            <h1 className="text-2xl font-bold mb-6">Buscando por "{query}"...</h1>
+            <h1 className="text-2xl font-bold mb-6">Buscando por &quot;{query}&quot;...</h1>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 <Skeleton className="h-28 rounded-lg" />
                 <Skeleton className="h-28 rounded-lg" />
@@ -51,7 +51,7 @@ function SearchResults() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">Resultados da busca por "{query}"</h1>
+      <h1 className="text-2xl font-bold mb-6">Resultados da busca por &quot;{query}&quot;</h1>
       {tasks && tasks.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {tasks.map((task) => (
@@ -74,7 +74,7 @@ function SearchResults() {
           ))}
         </div>
       ) : (
-        <p className="text-center p-8 text-muted-foreground">Nenhum resultado encontrado para "{query}".</p>
+  <p className="text-center p-8 text-muted-foreground">Nenhum resultado encontrado para &quot;{query}&quot;.</p>
       )}
     </div>
   );

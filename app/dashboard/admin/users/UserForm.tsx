@@ -18,10 +18,6 @@ const formSchema = z.object({
   email: z.string().email({ message: 'Por favor, insira um email válido.' }),
   tipo_usuario: z.enum(['comum', 'gerente', 'admin']),
   senha: z.string().optional(),
-}).refine(data => {
-    // A senha só é obrigatória se não estivermos editando um usuário (ou seja, quando não há `id`)
-    // Esta lógica será aplicada no componente pai, mas a definição está aqui.
-    return true;
 });
 
 
@@ -67,32 +63,46 @@ export function UserForm({ isOpen, onOpenChange, user }: UserFormProps) {
     }
   }, [user, form]);
 
-  const mutation = useMutation({
-    mutationFn: isEditing ? updateUser : createUser,
+  type UserPayload = Omit<z.infer<typeof formSchema>, 'senha'> & { senha?: string } | ({ id: number } & Omit<z.infer<typeof formSchema>, 'senha'>);
+
+  type ShortUserPayload = { nome: string; email: string; tipo_usuario: z.infer<typeof formSchema>['tipo_usuario']; id?: number };
+
+  function isUserWithId(p: UserPayload): p is { id: number } & Omit<z.infer<typeof formSchema>, 'senha'> {
+    return typeof (p as { id?: unknown }).id === 'number';
+  }
+
+  const mutation = useMutation<unknown, unknown, UserPayload>({
+    mutationFn: (payload: UserPayload) => {
+      if (isUserWithId(payload)) {
+        return updateUser(payload as { id: number } & Omit<z.infer<typeof formSchema>, 'senha'>);
+      }
+      return createUser(payload as Omit<z.infer<typeof formSchema>, 'senha'> & { senha?: string });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       onOpenChange(false);
     },
-    onError: (error) => {
+    onError: (error: unknown) => {
       console.error("Erro ao salvar usuário:", error);
       // Aqui você pode adicionar um toast ou estado de erro
     },
   });
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    const dataToSend: any = values;
-    if (isEditing) {
-      dataToSend.id = user.id;
-      // Não enviamos a senha se o campo estiver vazio durante a edição
-      if (!values.senha) {
-        delete dataToSend.senha;
-      }
-    } else {
-        if (!values.senha) {
-            form.setError("senha", { type: "manual", message: "A senha é obrigatória para novos usuários." });
-            return;
-        }
+    if (!isEditing && !values.senha) {
+      form.setError('senha', { type: 'manual', message: 'A senha é obrigatória para novos usuários.' });
+      return;
     }
+
+    const dataToSend: UserPayload = isEditing && user ? { ...values, id: user.id } : values;
+    // Se estiver editando e senha vazia, removemos o campo
+    if (isEditing && !(values.senha && values.senha.length > 0)) {
+      // Construir payload sem a senha explicitamente
+      const payloadWithoutSenha: ShortUserPayload = { nome: values.nome, email: values.email, tipo_usuario: values.tipo_usuario, id: user?.id };
+      mutation.mutate(payloadWithoutSenha as UserPayload);
+      return;
+    }
+
     mutation.mutate(dataToSend);
   };
 
