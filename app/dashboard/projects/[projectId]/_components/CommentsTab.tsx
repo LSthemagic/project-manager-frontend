@@ -106,20 +106,21 @@ export function CommentsTab({ taskId }: CommentsTabProps) {
       <div className="space-y-4 max-h-60 overflow-y-auto pr-4">
         {isLoading && <p>Carregando comentários...</p>}
         {comments?.map((comment) => (
+          console.log(comment),
           <div key={comment.id} className="flex items-start gap-4">
             <Avatar className="h-9 w-9">
-              {user?.profile_picture ? (
+              {comment?.usuario_profile_picture ? (
                 <AvatarImage
-                  src={getUploadUrl(user.profile_picture) || undefined}
-                  alt={user.nome}
+                  src={getUploadUrl(comment?.usuario_profile_picture) || undefined}
+                  alt={comment.nome}
                 />
               ) : (
-                <AvatarFallback>{getInitials(user?.nome || "")}</AvatarFallback>
+                <AvatarFallback>{getInitials(comment?.nome || "")}</AvatarFallback>
               )}
             </Avatar>
             <div className="grid gap-1.5 w-full">
               <div className="flex items-center justify-between">
-                <p className="font-semibold">{comment.usuario_nome}</p>
+                <p className="font-semibold">{comment.nome}</p>
                 {canDelete({ id: comment.usuario_id, tipo_usuario: "" }) && (
                   <Button
                     variant="ghost"
