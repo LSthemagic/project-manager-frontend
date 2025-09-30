@@ -25,7 +25,7 @@ type CategoryFormProps = {
 };
 
 const createCategory = (data: z.infer<typeof formSchema>) => api.post('/categories', data);
-const updateCategory = ({ id, ...data }: { id: number } & z.infer<typeof formSchema>) => api.put(`/categories/${id}`, data);
+const updateCategory = (payload: { id: number } & z.infer<typeof formSchema>) => api.put(`/categories/${payload.id}`, payload);
 
 export function CategoryForm({ isOpen, onOpenChange, category }: CategoryFormProps) {
   const queryClient = useQueryClient();
@@ -48,20 +48,26 @@ export function CategoryForm({ isOpen, onOpenChange, category }: CategoryFormPro
     }
   }, [category, form]);
 
-  const mutation = useMutation({
-    mutationFn: isEditing ? updateCategory : createCategory,
+  type CategoryPayload = z.infer<typeof formSchema> | ({ id: number } & z.infer<typeof formSchema>);
+  const mutation = useMutation<unknown, unknown, CategoryPayload>({
+    mutationFn: (payload: CategoryPayload) => {
+      if ('id' in payload) {
+        return updateCategory(payload as { id: number } & z.infer<typeof formSchema>);
+      }
+      return createCategory(payload as z.infer<typeof formSchema>);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
       onOpenChange(false);
     },
-    onError: (error) => {
+    onError: (error: unknown) => {
       console.error("Erro ao salvar categoria:", error);
     },
   });
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    const dataToSend: any = values;
-    if (isEditing) {
+    const dataToSend = { ...values } as z.infer<typeof formSchema> & { id?: number };
+    if (isEditing && category) {
       dataToSend.id = category.id;
     }
     mutation.mutate(dataToSend);

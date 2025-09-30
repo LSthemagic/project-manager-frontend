@@ -10,9 +10,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Crown, Trash2, UserPlus } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Trash2, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import {
   Popover,
@@ -21,7 +20,6 @@ import {
 } from "@/components/ui/popover";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
-import { AvatarImage } from "@radix-ui/react-avatar";
 
 type TeamManagementModalProps = {
   isOpen: boolean;
@@ -63,15 +61,7 @@ const removeMemberFromTeam = ({
   return api.delete(`/teams/${teamId}/members/${userId}`);
 };
 
-const updateTeamLeader = ({
-  teamId,
-  lider_id,
-}: {
-  teamId: number;
-  lider_id: number;
-}) => {
-  return api.put(`/teams/${teamId}`, { lider_id });
-};
+// updateTeamLeader removed: não utilizado atualmente
 
 export function TeamManagementModal({
   isOpen,
@@ -97,26 +87,21 @@ export function TeamManagementModal({
 
   const mutationOptions = {
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["projectMembers", project.team_id],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["project", String(project.id)],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["projectMembers", project.id],
-      });
+      queryClient.invalidateQueries({ queryKey: ["projectMembers", project.team_id] });
+      queryClient.invalidateQueries({ queryKey: ["project", String(project.id)] });
+      queryClient.invalidateQueries({ queryKey: ["projectMembers", project.id] });
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Ocorreu um erro.");
+    onError: (error: unknown) => {
+      const maybe = error as { response?: { data?: { message?: string } } } | undefined;
+      toast.error(maybe?.response?.data?.message || "Ocorreu um erro.");
     },
   };
 
   const addMemberMutation = useMutation({
     ...mutationOptions,
     mutationFn: addMemberToTeam,
-    onSuccess: (...args) => {
-      mutationOptions.onSuccess(...args);
+    onSuccess: () => {
+      mutationOptions.onSuccess();
       toast.success("Membro adicionado com sucesso!");
       setOpenAddMember(false);
       setSearchTerm("");
@@ -125,17 +110,9 @@ export function TeamManagementModal({
   const removeMemberMutation = useMutation({
     ...mutationOptions,
     mutationFn: removeMemberFromTeam,
-    onSuccess: (...args) => {
-      mutationOptions.onSuccess(...args);
+    onSuccess: () => {
+      mutationOptions.onSuccess();
       toast.success("Membro removido com sucesso!");
-    },
-  });
-  const updateLeaderMutation = useMutation({
-    ...mutationOptions,
-    mutationFn: updateTeamLeader,
-    onSuccess: (...args) => {
-      mutationOptions.onSuccess(...args);
-      toast.success("Líder do projeto atualizado!");
     },
   });
 
@@ -214,16 +191,15 @@ export function TeamManagementModal({
               <p>Carregando membros...</p>
             ) : (
               members.map((member) => (
-                console.log(member),
                 <div
                   key={member.id}
                   className="flex items-center justify-between p-2 rounded-md border"
                 >
                   <div className="flex items-center gap-3">
                     <Avatar className="h-9 w-9">
-                      {(member as any)?.profile_picture ? (
+                      {((member as unknown) as { profile_picture?: string | null }).profile_picture ? (
                         <AvatarImage
-                          src={getUploadUrl((member as any).profile_picture) || undefined}
+                          src={getUploadUrl(((member as unknown) as { profile_picture?: string | null }).profile_picture!) || undefined}
                           alt={member.nome}
                         />
                       ) : (

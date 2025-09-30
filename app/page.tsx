@@ -13,7 +13,6 @@ import {
   Zap,
   ArrowRight,
   Star,
-  TrendingUp,
 } from "lucide-react";
 import { SimpleCarousel } from "@/components/ui/simple-carousel";
 import api from "@/lib/api";

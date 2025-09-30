@@ -1,6 +1,7 @@
 'use client';
 
 import { useForm } from 'react-hook-form';
+import type { Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -50,8 +51,10 @@ export function TaskDetailsForm({ task }: TaskDetailsFormProps) {
     queryFn: () => fetchProjectMembers(task.projeto_id),
   });
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  type FormValues = z.infer<typeof formSchema>;
+
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema) as unknown as Resolver<FormValues>,
     defaultValues: {
         titulo: task.titulo || '',
         descricao: task.descricao || '',
@@ -173,7 +176,7 @@ export function TaskDetailsForm({ task }: TaskDetailsFormProps) {
                         </FormControl>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar mode="single" selected={field.value} onSelect={field.onChange} />
+                        <Calendar selected={field.value ?? undefined} onSelect={field.onChange} />
                         </PopoverContent>
                     </Popover>
                     <FormMessage />
@@ -196,7 +199,7 @@ export function TaskDetailsForm({ task }: TaskDetailsFormProps) {
                         </FormControl>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar mode="single" selected={field.value} onSelect={field.onChange}  />
+                        <Calendar selected={field.value ?? undefined} onSelect={field.onChange}  />
                         </PopoverContent>
                     </Popover>
                     <FormMessage />

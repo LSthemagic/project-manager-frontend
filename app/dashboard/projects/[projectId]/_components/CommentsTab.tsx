@@ -16,9 +16,8 @@ import {
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Trash2 } from "lucide-react";
-import { AvatarImage } from "@radix-ui/react-avatar";
 
 const fetchComments = async (taskId: number): Promise<Comment[]> => {
   const { data } = await api.get(`/tasks/${taskId}/comments`);
@@ -106,12 +105,11 @@ export function CommentsTab({ taskId }: CommentsTabProps) {
       <div className="space-y-4 max-h-60 overflow-y-auto pr-4">
         {isLoading && <p>Carregando comentários...</p>}
         {comments?.map((comment) => (
-          console.log(comment),
           <div key={comment.id} className="flex items-start gap-4">
             <Avatar className="h-9 w-9">
-              {comment?.usuario_profile_picture ? (
+              {((comment as unknown) as { usuario_profile_picture?: string }).usuario_profile_picture ? (
                 <AvatarImage
-                  src={getUploadUrl(comment?.usuario_profile_picture) || undefined}
+                  src={getUploadUrl(((comment as unknown) as { usuario_profile_picture?: string }).usuario_profile_picture) || undefined}
                   alt={comment.nome}
                 />
               ) : (
@@ -120,7 +118,7 @@ export function CommentsTab({ taskId }: CommentsTabProps) {
             </Avatar>
             <div className="grid gap-1.5 w-full">
               <div className="flex items-center justify-between">
-                <p className="font-semibold">{comment.nome}</p>
+                <p className="font-semibold -mt-3">{comment.nome}</p>
                 {canDelete({ id: comment.usuario_id, tipo_usuario: "" }) && (
                   <Button
                     variant="ghost"
@@ -131,8 +129,10 @@ export function CommentsTab({ taskId }: CommentsTabProps) {
                   </Button>
                 )}
               </div>
-              <p className="text-sm text-muted-foreground">
-                {comment.conteudo}
+              <p className="text-sm -mt-4 text-muted-foreground">
+                <p className="-mt-1">{comment.usuario_email}</p>
+                <br />
+                <p className="-mt-4 font-medium">{comment.conteudo}</p>
               </p>
             </div>
           </div>

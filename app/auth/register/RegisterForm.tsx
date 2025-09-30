@@ -49,8 +49,9 @@ export function RegisterForm() {
       setTimeout(() => {
         router.push('/auth/login');
       }, 2000);
-    } catch (err: any) {
-      if (err.response && err.response.status === 409) {
+    } catch (err: unknown) {
+      const maybeErr = err as { response?: { status?: number } } | undefined;
+      if (maybeErr?.response?.status === 409) {
         setError('Este email já está em uso.');
       } else {
         setError('Ocorreu um erro ao criar a conta.');

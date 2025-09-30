@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { useForm } from 'react-hook-form';
+import type { Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -19,6 +20,10 @@ type TimeLog = {
     data_registro: string;
     usuario_nome: string;
     usuario_id: number;
+    nome: string;
+    email: string;
+    tipo_usuario: string;
+    usuario_profile_picture?: string;
 };
 
 const fetchTimeLogs = async (taskId: number): Promise<TimeLog[]> => {
@@ -68,8 +73,9 @@ export function TimeLogTab({ taskId }: TimeLogTabProps) {
         },
     });
 
-    const form = useForm<z.infer<typeof timeLogSchema>>({
-        resolver: zodResolver(timeLogSchema),
+    type FormValues = z.infer<typeof timeLogSchema>;
+    const form = useForm<FormValues>({
+        resolver: zodResolver(timeLogSchema) as unknown as Resolver<FormValues>,
         defaultValues: { horas: 0, descricao: '' },
     });
 

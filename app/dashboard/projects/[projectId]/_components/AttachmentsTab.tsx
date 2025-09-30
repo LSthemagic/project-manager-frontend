@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Image, Paperclip, Trash2 } from "lucide-react";
+import { Image as IconImage, Paperclip, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import {
@@ -28,7 +28,7 @@ const fetchAttachments = async (taskId: number): Promise<Attachment[]> => {
   try {
     const { data } = await api.get(`/tasks/${taskId}/attachments`);
     return data;
-  } catch (e) {
+  } catch {
     console.warn("Could not fetch attachments. Endpoint might be missing.");
     return [];
   }
@@ -165,7 +165,7 @@ export function AttachmentsTab({ taskId }: AttachmentsTabProps) {
                       size="icon"
                       title="Redimensionar Imagem"
                     >
-                      <Image className="h-4 w-4 text-muted-foreground" />
+                      <IconImage className="h-4 w-4 text-muted-foreground" aria-hidden />
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-2">
