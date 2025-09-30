@@ -24,7 +24,6 @@ import {
   addMonths,
   subMonths
 } from 'date-fns';
-import { toZonedTime } from 'date-fns-tz';
 import { ptBR } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import api from '@/lib/api';
@@ -98,39 +97,57 @@ export function CalendarView() {
     );
   }, [projects, filterStatus]);
 
-  // Obter timezone do usuário
-  const userTimeZone = typeof window !== 'undefined' ? Intl.DateTimeFormat().resolvedOptions().timeZone : 'America/Sao_Paulo';
+  // Helper: converte uma ISO UTC (com Z) para uma Date local representando a mesma data (ignorando o horário)
+  // Ex: '2025-09-29T00:00:00.000Z' -> new Date(2025, 8, 29) (meio-dia local não envolvido)
+  const utcIsoToLocalDateOnly = (isoString: string | null | undefined) => {
+    if (!isoString) return null;
+    try {
+      const d = parseISO(isoString);
+      // extrair componentes UTC e construir Date local com os mesmos Y/M/D
+      const y = d.getUTCFullYear();
+      const m = d.getUTCMonth();
+      const dt = d.getUTCDate();
+      return new Date(y, m, dt);
+    } catch {
+      return null;
+    }
+  };
 
   // Obter projetos que se estendem por um período - memoizado
   const periodProjects = useMemo(() => {
     return filteredProjects.filter(project => {
-      const startDateRaw = project.data_inicio ? toZonedTime(parseISO(project.data_inicio), userTimeZone) : null;
-      const endDateRaw = project.data_fim ? toZonedTime(parseISO(project.data_fim), userTimeZone) : null;
+      // Tratamos a string como data only no UTC e convertemos para Date local sem deslocamento
+      const startDateRaw = project.data_inicio ? utcIsoToLocalDateOnly(project.data_inicio) : null;
+      const endDateRaw = project.data_fim ? utcIsoToLocalDateOnly(project.data_fim) : null;
       const startDate = startDateRaw ? startOfDay(startDateRaw) : null;
       const endDate = endDateRaw ? endOfDay(endDateRaw) : null;
       return startDate && endDate && isValid(startDate) && isValid(endDate);
     }).map(project => ({
       ...project,
-      startDate: startOfDay(toZonedTime(parseISO(project.data_inicio!), userTimeZone)),
-      endDate: endOfDay(toZonedTime(parseISO(project.data_fim!), userTimeZone))
+      startDate: startOfDay(utcIsoToLocalDateOnly(project.data_inicio!)!),
+      endDate: endOfDay(utcIsoToLocalDateOnly(project.data_fim!)!)
     }));
-  }, [filteredProjects, userTimeZone]);
+  }, [filteredProjects]);
 
   // Obter projetos pontuais (sem período definido) - callback otimizado
   const getPointProjects = useCallback((date: Date) => {
     return filteredProjects.filter(project => {
-      const startDate = project.data_inicio ? startOfDay(toZonedTime(parseISO(project.data_inicio), userTimeZone)) : null;
-      const endDate = project.data_fim ? endOfDay(toZonedTime(parseISO(project.data_fim), userTimeZone)) : null;
-      const creationDate = startOfDay(toZonedTime(parseISO(project.data_criacao), userTimeZone));
+      const startRaw = project.data_inicio ? utcIsoToLocalDateOnly(project.data_inicio) : null;
+      const endRaw = project.data_fim ? utcIsoToLocalDateOnly(project.data_fim) : null;
+      const creationRaw = utcIsoToLocalDateOnly(project.data_criacao);
+
+      const startDate = startRaw ? startOfDay(startRaw) : null;
+      const endDate = endRaw ? endOfDay(endRaw) : null;
+      const creationDate = creationRaw ? startOfDay(creationRaw) : null;
 
       // Se não tem período definido, mostra na data de criação
       if (!startDate || !endDate) {
-        return isSameDay(date, creationDate);
+        return creationDate ? isSameDay(date, creationDate) : false;
       }
 
       return false;
     });
-  }, [filteredProjects, userTimeZone]);
+  }, [filteredProjects]);
 
   // Handler para abrir modal de criação de projeto - otimizado
   const handleDateClick = useCallback((date: Date) => {
