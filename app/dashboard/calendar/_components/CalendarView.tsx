@@ -11,6 +11,8 @@ import {
   format, 
   parseISO, 
   isValid, 
+  startOfDay,
+  endOfDay,
   startOfMonth, 
   endOfMonth, 
   startOfWeek, 
@@ -102,22 +104,24 @@ export function CalendarView() {
   // Obter projetos que se estendem por um período - memoizado
   const periodProjects = useMemo(() => {
     return filteredProjects.filter(project => {
-      const startDate = project.data_inicio ? toZonedTime(parseISO(project.data_inicio), userTimeZone) : null;
-      const endDate = project.data_fim ? toZonedTime(parseISO(project.data_fim), userTimeZone) : null;
+      const startDateRaw = project.data_inicio ? toZonedTime(parseISO(project.data_inicio), userTimeZone) : null;
+      const endDateRaw = project.data_fim ? toZonedTime(parseISO(project.data_fim), userTimeZone) : null;
+      const startDate = startDateRaw ? startOfDay(startDateRaw) : null;
+      const endDate = endDateRaw ? endOfDay(endDateRaw) : null;
       return startDate && endDate && isValid(startDate) && isValid(endDate);
     }).map(project => ({
       ...project,
-      startDate: toZonedTime(parseISO(project.data_inicio!), userTimeZone),
-      endDate: toZonedTime(parseISO(project.data_fim!), userTimeZone)
+      startDate: startOfDay(toZonedTime(parseISO(project.data_inicio!), userTimeZone)),
+      endDate: endOfDay(toZonedTime(parseISO(project.data_fim!), userTimeZone))
     }));
   }, [filteredProjects, userTimeZone]);
 
   // Obter projetos pontuais (sem período definido) - callback otimizado
   const getPointProjects = useCallback((date: Date) => {
     return filteredProjects.filter(project => {
-      const startDate = project.data_inicio ? toZonedTime(parseISO(project.data_inicio), userTimeZone) : null;
-      const endDate = project.data_fim ? toZonedTime(parseISO(project.data_fim), userTimeZone) : null;
-      const creationDate = toZonedTime(parseISO(project.data_criacao), userTimeZone);
+      const startDate = project.data_inicio ? startOfDay(toZonedTime(parseISO(project.data_inicio), userTimeZone)) : null;
+      const endDate = project.data_fim ? endOfDay(toZonedTime(parseISO(project.data_fim), userTimeZone)) : null;
+      const creationDate = startOfDay(toZonedTime(parseISO(project.data_criacao), userTimeZone));
 
       // Se não tem período definido, mostra na data de criação
       if (!startDate || !endDate) {
