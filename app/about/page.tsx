@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Users, Target, Award, Heart, ArrowRight, Lightbulb, Shield, Rocket } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function AboutPage() {
   return (
@@ -112,9 +113,15 @@ export default function AboutPage() {
             <div className="grid gap-8 lg:grid-cols-3 md:grid-cols-2 max-w-5xl mx-auto">
               <Card className="text-center border-0 shadow-lg">
                 <CardHeader>
-                  <div className="mx-auto mb-4 h-24 w-24 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
-                    <span className="text-2xl font-bold text-white">JH</span>
-                  </div>
+                    <div className="mx-auto mb-4 h-24 w-24 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
+                    <Image
+                      src="/images/profiles/joao.png" // Caminho relativo a 'public'
+                      alt="Foto de perfil"
+                      width={500} // Requer largura
+                      height={300} // Requer altura
+                      className="rounded-full object-cover h-24 w-24"
+                    />
+                    </div>
                   <CardTitle className="text-xl">João Henrique</CardTitle>
                   <p className="text-sm text-gray-500 dark:text-gray-400">CEO & Co-Fundador</p>
                 </CardHeader>
@@ -129,7 +136,13 @@ export default function AboutPage() {
               <Card className="text-center border-0 shadow-lg">
                 <CardHeader>
                   <div className="mx-auto mb-4 h-24 w-24 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center">
-                    <span className="text-2xl font-bold text-white">RS</span>
+                    <Image
+                      src="/images/profiles/railan.jpg" // Caminho relativo a 'public'
+                      alt="Foto de perfil"
+                      width={500} // Requer largura
+                      height={300} // Requer altura
+                      className="rounded-full object-cover h-24 w-24"
+                    />
                   </div>
                   <CardTitle className="text-xl">Railan Santana</CardTitle>
                   <p className="text-sm text-gray-500 dark:text-gray-400">CEO & Co-Fundador</p>
@@ -145,7 +158,13 @@ export default function AboutPage() {
               <Card className="text-center border-0 shadow-lg">
                 <CardHeader>
                   <div className="mx-auto mb-4 h-24 w-24 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center">
-                    <span className="text-2xl font-bold text-white">NP</span>
+                    <Image
+                      src="/images/profiles/nadson.png" // Caminho relativo a 'public'
+                      alt="Foto de perfil"
+                      width={500} // Requer largura
+                      height={300} // Requer altura
+                      className="rounded-full object-cover h-24 w-24"
+                    />
                   </div>
                   <CardTitle className="text-xl">Nadson Pereira</CardTitle>
                   <p className="text-sm text-gray-500 dark:text-gray-400">CEO & Co-Fundador</p>
